@@ -1,3 +1,3 @@
-# Kalories - Diet Plan Tracker
+# Macrova
 
-Frontend - [Kalories](https://github.com/Karthick-sketch/diet-planner-ui)
+Frontend - [Macrova](https://github.com/Karthick-sketch/macrova-ui)

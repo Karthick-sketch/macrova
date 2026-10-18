@@ -18,17 +18,18 @@ import org.karthick.macrova.security.UserSession;
 import org.karthick.macrova.shared.model.Calories;
 import org.karthick.macrova.shared.model.Macros;
 import org.karthick.macrova.shared.model.MealKcal;
-import org.karthick.macrova.util.CaloriesCalculator;
+import org.karthick.macrova.util.NutrientsCalculator;
 import org.karthick.macrova.util.constants.MacrosConstants;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
-@AllArgsConstructor
 @Service
+@AllArgsConstructor
 public class DietPlanService {
 
   private final DietPlanRepository dietPlannerRepository;
   private final DietPlanTrackRepository dietPlanTrackRepository;
+
   private final UserSession userSession;
 
   public List<DietPlan> findAllDietPlans() {
@@ -81,7 +82,7 @@ public class DietPlanService {
 
   private void validateDietPlan(DietPlan dietPlan) {
     // validate Target weight
-    double bmi = CaloriesCalculator.findBMI(
+    double bmi = NutrientsCalculator.findBMI(
       dietPlan.getHeight(),
       dietPlan.getTargetWeight()
     );
@@ -95,8 +96,8 @@ public class DietPlanService {
     }
     // validate Duration
     double mass = dietPlan.getWeight() - dietPlan.getTargetWeight();
-    int min = CaloriesCalculator.findMinimumDuration(mass, dietPlan.getPlan());
-    int max = CaloriesCalculator.findMaximumDuration(mass);
+    int min = NutrientsCalculator.findMinimumDuration(mass, dietPlan.getPlan());
+    int max = NutrientsCalculator.findMaximumDuration(mass);
     if (dietPlan.getDuration() < min || dietPlan.getDuration() > max) {
       throw new BadRequestException(
         min + "-" + max + " days are the healthy duration"
@@ -106,7 +107,7 @@ public class DietPlanService {
 
   private void processDietPlan(DietPlan dietPlan, DietPlanTrack dietPlanTrack) {
     dietPlanTrack.setTdee(
-      CaloriesCalculator.findTDEE(
+      NutrientsCalculator.findTDEE(
         dietPlan.getAge(),
         dietPlanTrack.getWeight(),
         dietPlan.getHeight(),
@@ -121,17 +122,17 @@ public class DietPlanService {
     );
     dietPlanTrack.setIntake(new Calories(intake));
     dietPlanTrack.setProtein(
-      new Calories(CaloriesCalculator.calcProtein(intake))
+      new Calories(NutrientsCalculator.findProtein(intake))
     );
-    dietPlanTrack.setFat(new Calories(CaloriesCalculator.calcFat(intake)));
-    dietPlanTrack.setCarbs(new Calories(CaloriesCalculator.calcCarbs(intake)));
+    dietPlanTrack.setFat(new Calories(NutrientsCalculator.findFat(intake)));
+    dietPlanTrack.setCarbs(new Calories(NutrientsCalculator.findCarbs(intake)));
     dietPlanTrack.setMealKcal(splitForMealKcal(dietPlanTrack));
   }
 
   private double getIntake(double tdee, Goal goal, Plan plan) {
     return plan == Plan.WEIGHT_LOSS
-      ? CaloriesCalculator.calcDeficit(tdee, goal.getValue())
-      : CaloriesCalculator.calcSurplus(tdee, goal.getValue());
+      ? NutrientsCalculator.findDeficit(tdee, goal.getValue())
+      : NutrientsCalculator.findSurplus(tdee, goal.getValue());
   }
 
   public DietPlanTrack createDietPlanTrack(DietPlan dietPlan) {
@@ -206,7 +207,7 @@ public class DietPlanService {
   }
 
   private double calcDeficitTaken(DietPlanTrack dietPlanTrack) {
-    return CaloriesCalculator.calcTakenDeficit(
+    return NutrientsCalculator.calcTakenDeficit(
       new Macros(
         dietPlanTrack.getProtein(),
         dietPlanTrack.getFat(),
@@ -262,10 +263,10 @@ public class DietPlanService {
       dietPlanTrack.getCarbs()
     );
     return new MealKcal(
-      CaloriesCalculator.macrosPercentage(macros, 30),
-      CaloriesCalculator.macrosPercentage(macros, 30),
-      CaloriesCalculator.macrosPercentage(macros, 15),
-      CaloriesCalculator.macrosPercentage(macros, 25)
+      NutrientsCalculator.macrosPercentage(macros, 30),
+      NutrientsCalculator.macrosPercentage(macros, 30),
+      NutrientsCalculator.macrosPercentage(macros, 15),
+      NutrientsCalculator.macrosPercentage(macros, 25)
     );
   }
 
@@ -316,22 +317,28 @@ public class DietPlanService {
     List<String> days,
     List<Double> weights
   ) {
-    MetricsDTO metricsDTO = new MetricsDTO();
     Calories intake = dietPlanTrack.getIntake();
-    metricsDTO.setTitle(title);
-    metricsDTO.setTaken(
-      CaloriesCalculator.calcPercentage(intake.getTaken(), intake.getTotal())
-    );
-    metricsDTO.setDuration(duration);
-    metricsDTO.setCurrentDay(dietPlanTrack.getDayCount());
-    metricsDTO.setCurrentWeight(dietPlanTrack.getWeight());
-    metricsDTO.setIntake(intake.getTotal());
-    metricsDTO.setProtein(dietPlanTrack.getProtein().getTotal());
-    metricsDTO.setCarbs(dietPlanTrack.getCarbs().getTotal());
-    metricsDTO.setFat(dietPlanTrack.getFat().getTotal());
-    metricsDTO.setDays(days);
-    metricsDTO.setWeights(weights);
-    return metricsDTO;
+    double taken =
+      intake.getTaken() != null
+        ? NutrientsCalculator.findPercentage(
+            intake.getTaken(),
+            intake.getTotal()
+          )
+        : 0;
+
+    return MetricsDTO.builder()
+      .title(title)
+      .taken(taken)
+      .duration(duration)
+      .currentDay(dietPlanTrack.getDayCount())
+      .currentWeight(dietPlanTrack.getWeight())
+      .intake(intake.getTotal())
+      .protein(dietPlanTrack.getProtein().getTotal())
+      .carbs(dietPlanTrack.getCarbs().getTotal())
+      .fat(dietPlanTrack.getFat().getTotal())
+      .days(days)
+      .weights(weights)
+      .build();
   }
 
   public boolean isThereAnyActivePlans() {
@@ -348,7 +355,7 @@ public class DietPlanService {
         dietPlanTrack.getMealKcal(),
         category
       );
-      return CaloriesCalculator.calcTotalDeficit(macros);
+      return NutrientsCalculator.calcTotalDeficit(macros);
     } catch (EntityNotFoundException e) {
       return 500L;
     }

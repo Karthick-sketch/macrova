@@ -7,10 +7,10 @@ import lombok.Setter;
 @Setter
 public class Calories {
 
-  private Double taken;
-  private Double total;
+  private double taken;
+  private double total;
 
-  public Calories(Double total) {
+  public Calories(double total) {
     this.total = total;
   }
 }

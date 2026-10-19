@@ -17,17 +17,17 @@ public class DietPlan {
 
   private String title;
   private Plan plan;
-  private Integer age;
+  private int age;
   private Gender gender;
-  private Double height;
-  private Double weight;
-  private Double todayWeight;
+  private double height;
+  private double weight;
+  private double todayWeight;
   private Goal goal;
-  private Double targetWeight;
-  private Integer duration;
+  private double targetWeight;
+  private int duration;
   private Activity activity;
   private String userId;
-  private Boolean active;
+  private boolean active;
   private LocalDate createdAt;
 
   public DietPlan() {

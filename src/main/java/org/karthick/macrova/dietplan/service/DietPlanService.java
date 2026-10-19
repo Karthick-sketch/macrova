@@ -192,8 +192,8 @@ public class DietPlanService {
     dietPlanMacros.getProtein().setTaken(macros.getProtein().getTaken());
     dietPlanMacros.getFat().setTaken(macros.getFat().getTaken());
     dietPlanMacros.getCarbs().setTaken(macros.getCarbs().getTaken());
-    dietPlanTrack.getIntake().setTaken(calcDeficitTaken(dietPlanTrack));
     adjustMacros(dietPlanTrack);
+    dietPlanTrack.getIntake().setTaken(calcDeficitTaken(dietPlanTrack));
     return dietPlanTrackRepository.save(dietPlanTrack);
   }
 
@@ -318,17 +318,11 @@ public class DietPlanService {
     List<Double> weights
   ) {
     Calories intake = dietPlanTrack.getIntake();
-    double taken =
-      intake.getTaken() != null
-        ? NutrientsCalculator.findPercentage(
-            intake.getTaken(),
-            intake.getTotal()
-          )
-        : 0;
-
     return MetricsDTO.builder()
       .title(title)
-      .taken(taken)
+      .taken(
+        NutrientsCalculator.findPercentage(intake.getTaken(), intake.getTotal())
+      )
       .duration(duration)
       .currentDay(dietPlanTrack.getDayCount())
       .currentWeight(dietPlanTrack.getWeight())

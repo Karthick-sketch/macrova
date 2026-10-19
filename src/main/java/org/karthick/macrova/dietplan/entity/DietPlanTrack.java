@@ -18,14 +18,14 @@ public class DietPlanTrack {
   @Id
   private String id;
 
-  private Double weight;
-  private Double tdee;
+  private double weight;
+  private double tdee;
   private Calories intake;
   private Calories protein;
   private Calories carbs;
   private Calories fat;
   private MealKcal mealKcal;
-  private Integer dayCount;
+  private int dayCount;
   private LocalDate createdAt;
   private String dietPlanId;
 

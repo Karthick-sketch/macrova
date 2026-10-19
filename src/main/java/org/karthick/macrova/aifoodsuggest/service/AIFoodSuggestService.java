@@ -1,4 +1,4 @@
-package org.karthick.macrova.aifoodsuggest;
+package org.karthick.macrova.aifoodsuggest.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;

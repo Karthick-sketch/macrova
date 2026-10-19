@@ -10,29 +10,35 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 @Service
-public class DeepSeekLLMService implements LLMService {
+public class OpenRouterLLMService implements LLMService {
+
+  private static final String URL =
+    "https://openrouter.ai/api/v1/chat/completions";
 
   private final RestTemplate restTemplate;
+  private final String model;
+  private final String apiKey;
 
-  @Value("${llm.deepseek.model}")
-  private String MODEL;
-
-  @Value("${llm.deepseek.api-key}")
-  private String API_KEY;
-
-  public DeepSeekLLMService(RestTemplate restTemplate) {
+  public OpenRouterLLMService(
+    RestTemplate restTemplate,
+    @Value("${llm.openrouter.model}") String model,
+    @Value("${llm.openrouter.api-key}") String apiKey
+  ) {
     this.restTemplate = restTemplate;
+    this.model = model;
+    this.apiKey = apiKey;
   }
 
   @Override
   public String chat(ChatModel chatModel) throws JsonProcessingException {
     ResponseEntity<String> response = restTemplate.exchange(
-      "https://openrouter.ai/api/v1/chat/completions",
+      URL,
       HttpMethod.valueOf("POST"),
       getHttpEntity(chatModel),
       String.class
@@ -42,8 +48,8 @@ public class DeepSeekLLMService implements LLMService {
 
   private HttpEntity<ChatModel> getHttpEntity(ChatModel chatModel) {
     HttpHeaders headers = new HttpHeaders();
-    headers.add("Authorization", "Bearer " + API_KEY);
-    headers.add("Content-Type", "application/json");
+    headers.add(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey);
+    headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
     return new HttpEntity<>(chatModel, headers);
   }
 
@@ -65,7 +71,7 @@ public class DeepSeekLLMService implements LLMService {
 
   private ChatModel buildFoodSuggestChatModel(String prompt) {
     ChatModel chatModel = new ChatModel();
-    chatModel.setModel(MODEL);
+    chatModel.setModel(model);
     chatModel.setMessages(
       List.of(
         new MessageModel(

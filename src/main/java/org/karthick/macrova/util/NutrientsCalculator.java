@@ -284,7 +284,7 @@ public final class NutrientsCalculator {
    *                in kilocalories
    * @return the protein target in grams, rounded to the nearest whole gram
    */
-  public static Double findProtein(double deficit) {
+  public static double findProtein(double deficit) {
     return Double.valueOf(Math.round(percentageOf(deficit, 30) / 4.0));
   }
 
@@ -298,7 +298,7 @@ public final class NutrientsCalculator {
    *                in kilocalories
    * @return the fat target in grams, rounded to the nearest whole gram
    */
-  public static Double findFat(double deficit) {
+  public static double findFat(double deficit) {
     return Double.valueOf(Math.round(percentageOf(deficit, 30) / 9.0));
   }
 
@@ -313,7 +313,7 @@ public final class NutrientsCalculator {
    *                in kilocalories
    * @return the carbohydrate target in grams, rounded to the nearest whole gram
    */
-  public static Double findCarbs(double deficit) {
+  public static double findCarbs(double deficit) {
     return Double.valueOf(Math.round(percentageOf(deficit, 40) / 4.0));
   }
 }

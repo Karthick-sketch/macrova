@@ -1,14 +1,12 @@
 package org.karthick.macrova.dietplan.entity;
 
 import java.time.LocalDate;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import org.karthick.macrova.dietplan.enums.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Getter
-@Setter
+@Data
 @Document(collection = "diet_plans")
 public class DietPlan {
 
@@ -31,6 +29,7 @@ public class DietPlan {
   private LocalDate createdAt;
 
   public DietPlan() {
+    this.active = true;
     this.createdAt = LocalDate.now();
   }
 }

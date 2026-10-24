@@ -1,10 +1,10 @@
-package org.karthick.dietplanner;
+package org.karthick.macrova;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class DietPlannerApplicationTests {
+class MacrovaApplicationTests {
 
   @Test
   void contextLoads() {}

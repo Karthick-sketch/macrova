@@ -13,7 +13,7 @@ public class MongoConfig extends AbstractMongoClientConfiguration {
 
   @Override
   protected @NonNull String getDatabaseName() {
-    return "diet_planner";
+    return "macrova";
   }
 
   @Override

@@ -66,6 +66,20 @@ public class DietPlanService {
     return dietPlan.get();
   }
 
+  public TdeeDTO calculateTDEE(BodyMetricsDTO bodyMetricsDTO) {
+    return new TdeeDTO(
+      Math.round(
+        NutrientsCalculator.findTDEE(
+          bodyMetricsDTO.getAge(),
+          bodyMetricsDTO.getWeight(),
+          bodyMetricsDTO.getHeight(),
+          bodyMetricsDTO.getGender(),
+          bodyMetricsDTO.getActivity()
+        )
+      )
+    );
+  }
+
   public DietPlan createDietPlan(DietPlan dietPlan) {
     validateDietPlan(dietPlan);
     dietPlan.setTodayWeight(dietPlan.getWeight());

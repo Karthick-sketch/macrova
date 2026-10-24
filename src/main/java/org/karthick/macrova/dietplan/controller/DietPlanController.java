@@ -2,11 +2,8 @@ package org.karthick.macrova.dietplan.controller;
 
 import java.util.List;
 import lombok.AllArgsConstructor;
-import org.karthick.macrova.dietplan.dto.DietPlanOverviewDTO;
-import org.karthick.macrova.dietplan.dto.DietPlansHistoryDTO;
-import org.karthick.macrova.dietplan.dto.MetricsDTO;
-import org.karthick.macrova.dietplan.entity.DietPlan;
-import org.karthick.macrova.dietplan.entity.DietPlanTrack;
+import org.karthick.macrova.dietplan.dto.*;
+import org.karthick.macrova.dietplan.entity.*;
 import org.karthick.macrova.dietplan.service.DietPlanService;
 import org.karthick.macrova.exception.BadRequestException;
 import org.karthick.macrova.shared.model.Macros;
@@ -40,6 +37,11 @@ public class DietPlanController {
   @GetMapping("/{dietPlanId}")
   public DietPlan getDietPlanById(@PathVariable String dietPlanId) {
     return dietPlanService.findDietPlanById(dietPlanId);
+  }
+
+  @PostMapping("/tdee")
+  public TdeeDTO calculateTDEE(@RequestBody BodyMetricsDTO bodyMetricsDTO) {
+    return dietPlanService.calculateTDEE(bodyMetricsDTO);
   }
 
   @PostMapping

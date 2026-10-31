@@ -34,21 +34,18 @@ public class DietPlanService {
 
   public List<DietPlan> findAllDietPlans() {
     return dietPlannerRepository.findByUserId(
-      userSession.getAuthenticatedUserId()
-    );
+        userSession.getAuthenticatedUserId());
   }
 
   public List<DietPlansHistoryDTO> findDietPlansHistory() {
     return dietPlannerRepository.findDietPlansHistoryByUserId(
-      userSession.getAuthenticatedUserId()
-    );
+        userSession.getAuthenticatedUserId());
   }
 
   public DietPlan findDietPlanById(String id) {
     Optional<DietPlan> dietPlan = dietPlannerRepository.findByIdAndUserId(
-      id,
-      userSession.getAuthenticatedUserId()
-    );
+        id,
+        userSession.getAuthenticatedUserId());
     if (dietPlan.isEmpty()) {
       throw new EntityNotFoundException("Diet plan not found");
     }
@@ -56,28 +53,25 @@ public class DietPlanService {
   }
 
   public DietPlan findDietPlanByUserId() {
-    Optional<DietPlan> dietPlan =
-      dietPlannerRepository.findByUserIdAndActiveIsTrue(
-        userSession.getAuthenticatedUserId()
-      );
+    Optional<DietPlan> dietPlan = dietPlannerRepository.findByUserIdAndActiveIsTrue(
+        userSession.getAuthenticatedUserId());
     if (dietPlan.isEmpty()) {
       throw new EntityNotFoundException("Diet plan not found");
     }
     return dietPlan.get();
   }
 
-  public TdeeDTO calculateTDEE(BodyMetricsDTO bodyMetricsDTO) {
-    return new TdeeDTO(
-      Math.round(
+  public BodyMetricsResponse calculateTDEE(BodyMetricsRequest bodyMetricsDTO) {
+    double tdee = Math.round(
         NutrientsCalculator.findTDEE(
-          bodyMetricsDTO.getAge(),
-          bodyMetricsDTO.getWeight(),
-          bodyMetricsDTO.getHeight(),
-          bodyMetricsDTO.getGender(),
-          bodyMetricsDTO.getActivity()
-        )
-      )
-    );
+            bodyMetricsDTO.getAge(),
+            bodyMetricsDTO.getWeight(),
+            bodyMetricsDTO.getHeight(),
+            bodyMetricsDTO.getGender(),
+            bodyMetricsDTO.getActivity()));
+    BodyMetricsResponse res = toBodyMetricsResponse(bodyMetricsDTO);
+    res.setTdee(tdee);
+    return res;
   }
 
   public DietPlan createDietPlan(DietPlan dietPlan) {
@@ -97,16 +91,12 @@ public class DietPlanService {
   private void validateDietPlan(DietPlan dietPlan) {
     // validate Target weight
     double bmi = NutrientsCalculator.findBMI(
-      dietPlan.getHeight(),
-      dietPlan.getTargetWeight()
-    );
-    if (
-      (Plan.WEIGHT_LOSS.equals(dietPlan.getPlan()) && bmi < 18) ||
-      (Plan.WEIGHT_GAIN.equals(dietPlan.getPlan()) && bmi > 25)
-    ) {
+        dietPlan.getHeight(),
+        dietPlan.getTargetWeight());
+    if ((Plan.WEIGHT_LOSS.equals(dietPlan.getPlan()) && bmi < 18) ||
+        (Plan.WEIGHT_GAIN.equals(dietPlan.getPlan()) && bmi > 25)) {
       throw new BadRequestException(
-        dietPlan.getTargetWeight() + "kg is not the healthy weight"
-      );
+          dietPlan.getTargetWeight() + "kg is not the healthy weight");
     }
     // validate Duration
     double mass = dietPlan.getWeight() - dietPlan.getTargetWeight();
@@ -114,30 +104,25 @@ public class DietPlanService {
     int max = NutrientsCalculator.findMaximumDuration(mass);
     if (dietPlan.getDuration() < min || dietPlan.getDuration() > max) {
       throw new BadRequestException(
-        min + "-" + max + " days are the healthy duration"
-      );
+          min + "-" + max + " days are the healthy duration");
     }
   }
 
   private void processDietPlan(DietPlan dietPlan, DietPlanTrack dietPlanTrack) {
     dietPlanTrack.setTdee(
-      NutrientsCalculator.findTDEE(
-        dietPlan.getAge(),
-        dietPlanTrack.getWeight(),
-        dietPlan.getHeight(),
-        dietPlan.getGender(),
-        dietPlan.getActivity()
-      )
-    );
+        NutrientsCalculator.findTDEE(
+            dietPlan.getAge(),
+            dietPlanTrack.getWeight(),
+            dietPlan.getHeight(),
+            dietPlan.getGender(),
+            dietPlan.getActivity()));
     double intake = getIntake(
-      dietPlanTrack.getTdee(),
-      dietPlan.getGoal(),
-      dietPlan.getPlan()
-    );
+        dietPlanTrack.getTdee(),
+        dietPlan.getGoal(),
+        dietPlan.getPlan());
     dietPlanTrack.setIntake(new Calories(intake));
     dietPlanTrack.setProtein(
-      new Calories(NutrientsCalculator.findProtein(intake))
-    );
+        new Calories(NutrientsCalculator.findProtein(intake)));
     dietPlanTrack.setFat(new Calories(NutrientsCalculator.findFat(intake)));
     dietPlanTrack.setCarbs(new Calories(NutrientsCalculator.findCarbs(intake)));
     dietPlanTrack.setMealKcal(splitForMealKcal(dietPlanTrack));
@@ -145,19 +130,18 @@ public class DietPlanService {
 
   private double getIntake(double tdee, Goal goal, Plan plan) {
     return plan == Plan.WEIGHT_LOSS
-      ? NutrientsCalculator.findDeficit(tdee, goal.getValue())
-      : NutrientsCalculator.findSurplus(tdee, goal.getValue());
+        ? NutrientsCalculator.findDeficit(tdee, goal.getValue())
+        : NutrientsCalculator.findSurplus(tdee, goal.getValue());
   }
 
   public DietPlanTrack createDietPlanTrack(DietPlan dietPlan) {
     LocalDate today = LocalDate.now();
     int dayCount = countDays(dietPlan.getCreatedAt(), today);
     DietPlanTrack dietPlanTrack = new DietPlanTrack(
-      dietPlan.getTodayWeight(),
-      today,
-      dayCount,
-      dietPlan.getId()
-    );
+        dietPlan.getTodayWeight(),
+        today,
+        dayCount,
+        dietPlan.getId());
     processDietPlan(dietPlan, dietPlanTrack);
     return dietPlanTrackRepository.save(dietPlanTrack);
   }
@@ -168,8 +152,7 @@ public class DietPlanService {
 
   public DietPlanTrack findDietPlanTrackById(@NonNull String dietPlanTrackId) {
     Optional<DietPlanTrack> dietPlanTrack = dietPlanTrackRepository.findById(
-      dietPlanTrackId
-    );
+        dietPlanTrackId);
     if (dietPlanTrack.isEmpty()) {
       throw new EntityNotFoundException("Diet plan track not found");
     }
@@ -179,8 +162,8 @@ public class DietPlanService {
   public DietPlanTrack findDietPlanTrackByDietPlanId(String dietPlanId) {
     DietPlan dietPlan = findDietPlanById(dietPlanId);
     return dietPlanTrackRepository
-      .findFirstByCreatedAtAndDietPlanId(LocalDate.now(), dietPlanId)
-      .orElseGet(() -> createDietPlanTrack(dietPlan));
+        .findFirstByCreatedAtAndDietPlanId(LocalDate.now(), dietPlanId)
+        .orElseGet(() -> createDietPlanTrack(dietPlan));
   }
 
   public DietPlanTrack addWeight(String dietPlanId, double weight) {
@@ -194,15 +177,13 @@ public class DietPlanService {
   }
 
   public DietPlanTrack updateMacros(
-    String dietPlanId,
-    String category,
-    Macros macros
-  ) {
+      String dietPlanId,
+      String category,
+      Macros macros) {
     DietPlanTrack dietPlanTrack = findDietPlanTrackByDietPlanId(dietPlanId);
     Macros dietPlanMacros = getMacrosByCategory(
-      dietPlanTrack.getMealKcal(),
-      category
-    );
+        dietPlanTrack.getMealKcal(),
+        category);
     dietPlanMacros.getProtein().setTaken(macros.getProtein().getTaken());
     dietPlanMacros.getFat().setTaken(macros.getFat().getTaken());
     dietPlanMacros.getCarbs().setTaken(macros.getCarbs().getTaken());
@@ -222,48 +203,41 @@ public class DietPlanService {
 
   private double calcDeficitTaken(DietPlanTrack dietPlanTrack) {
     return NutrientsCalculator.calcTakenDeficit(
-      new Macros(
-        dietPlanTrack.getProtein(),
-        dietPlanTrack.getFat(),
-        dietPlanTrack.getCarbs()
-      )
-    );
+        new Macros(
+            dietPlanTrack.getProtein(),
+            dietPlanTrack.getFat(),
+            dietPlanTrack.getCarbs()));
   }
 
   private void adjustMacros(DietPlanTrack dietPlanTrack) {
     MealKcal mealKcal = dietPlanTrack.getMealKcal();
     dietPlanTrack
-      .getProtein()
-      .setTaken(
-        mealKcal.getBreakfast().getProtein().getTaken() +
-          mealKcal.getLunch().getProtein().getTaken() +
-          mealKcal.getDinner().getProtein().getTaken() +
-          mealKcal.getSnack().getProtein().getTaken()
-      );
+        .getProtein()
+        .setTaken(
+            mealKcal.getBreakfast().getProtein().getTaken() +
+                mealKcal.getLunch().getProtein().getTaken() +
+                mealKcal.getDinner().getProtein().getTaken() +
+                mealKcal.getSnack().getProtein().getTaken());
     dietPlanTrack
-      .getCarbs()
-      .setTaken(
-        mealKcal.getBreakfast().getCarbs().getTaken() +
-          mealKcal.getLunch().getCarbs().getTaken() +
-          mealKcal.getDinner().getCarbs().getTaken() +
-          mealKcal.getSnack().getCarbs().getTaken()
-      );
+        .getCarbs()
+        .setTaken(
+            mealKcal.getBreakfast().getCarbs().getTaken() +
+                mealKcal.getLunch().getCarbs().getTaken() +
+                mealKcal.getDinner().getCarbs().getTaken() +
+                mealKcal.getSnack().getCarbs().getTaken());
     dietPlanTrack
-      .getFat()
-      .setTaken(
-        mealKcal.getBreakfast().getFat().getTaken() +
-          mealKcal.getLunch().getFat().getTaken() +
-          mealKcal.getDinner().getFat().getTaken() +
-          mealKcal.getSnack().getFat().getTaken()
-      );
+        .getFat()
+        .setTaken(
+            mealKcal.getBreakfast().getFat().getTaken() +
+                mealKcal.getLunch().getFat().getTaken() +
+                mealKcal.getDinner().getFat().getTaken() +
+                mealKcal.getSnack().getFat().getTaken());
   }
 
   public MealKcal getMealKcal(String dietPlanId) {
-    Optional<DietPlanTrack> dietPlanTrack =
-      dietPlanTrackRepository.findFirstByCreatedAtAndDietPlanId(
+    Optional<DietPlanTrack> dietPlanTrack = dietPlanTrackRepository.findFirstByCreatedAtAndDietPlanId(
         LocalDate.now(),
-        dietPlanId
-      );
+        dietPlanId);
     if (dietPlanTrack.isEmpty()) {
       throw new EntityNotFoundException("No macros found.");
     }
@@ -272,16 +246,14 @@ public class DietPlanService {
 
   private MealKcal splitForMealKcal(DietPlanTrack dietPlanTrack) {
     Macros macros = new Macros(
-      dietPlanTrack.getProtein(),
-      dietPlanTrack.getFat(),
-      dietPlanTrack.getCarbs()
-    );
+        dietPlanTrack.getProtein(),
+        dietPlanTrack.getFat(),
+        dietPlanTrack.getCarbs());
     return new MealKcal(
-      NutrientsCalculator.macrosPercentage(macros, 30),
-      NutrientsCalculator.macrosPercentage(macros, 30),
-      NutrientsCalculator.macrosPercentage(macros, 15),
-      NutrientsCalculator.macrosPercentage(macros, 25)
-    );
+        NutrientsCalculator.macrosPercentage(macros, 30),
+        NutrientsCalculator.macrosPercentage(macros, 30),
+        NutrientsCalculator.macrosPercentage(macros, 15),
+        NutrientsCalculator.macrosPercentage(macros, 25));
   }
 
   public MetricsDTO getMetricsByDateRange() {
@@ -290,33 +262,30 @@ public class DietPlanService {
     Date[] dateRange = getOneWeekDateRange();
     DietPlan dietPlan = findDietPlanByUserId();
     DietPlanTrack dietPlanTrack = findDietPlanTrackByDietPlanId(
-      dietPlan.getId()
-    );
+        dietPlan.getId());
     dietPlanTrackRepository
-      .findByDateRangeAndDietPlanId(
-        dateRange[0],
-        dateRange[1],
-        dietPlan.getId()
-      )
-      .forEach(track -> {
-        days.add(getDayName(track.getCreatedAt()));
-        weights.add(track.getWeight());
-      });
+        .findByDateRangeAndDietPlanId(
+            dateRange[0],
+            dateRange[1],
+            dietPlan.getId())
+        .forEach(track -> {
+          days.add(getDayName(track.getCreatedAt()));
+          weights.add(track.getWeight());
+        });
     return buildMetrics(
-      dietPlanTrack,
-      dietPlan.getTitle(),
-      dietPlan.getDuration(),
-      days,
-      weights
-    );
+        dietPlanTrack,
+        dietPlan.getTitle(),
+        dietPlan.getDuration(),
+        days,
+        weights);
   }
 
   private Date[] getOneWeekDateRange() {
     ZoneId zoneId = ZoneId.of("Asia/Kolkata");
     LocalDate today = LocalDate.now(zoneId);
     return new Date[] {
-      Date.from(today.minusWeeks(1).atStartOfDay(zoneId).toInstant()),
-      Date.from(today.atTime(LocalTime.MAX).atZone(zoneId).toInstant()),
+        Date.from(today.minusWeeks(1).atStartOfDay(zoneId).toInstant()),
+        Date.from(today.atTime(LocalTime.MAX).atZone(zoneId).toInstant()),
     };
   }
 
@@ -325,28 +294,26 @@ public class DietPlanService {
   }
 
   private MetricsDTO buildMetrics(
-    DietPlanTrack dietPlanTrack,
-    String title,
-    int duration,
-    List<String> days,
-    List<Double> weights
-  ) {
+      DietPlanTrack dietPlanTrack,
+      String title,
+      int duration,
+      List<String> days,
+      List<Double> weights) {
     Calories intake = dietPlanTrack.getIntake();
     return MetricsDTO.builder()
-      .title(title)
-      .taken(
-        NutrientsCalculator.findPercentage(intake.getTaken(), intake.getTotal())
-      )
-      .duration(duration)
-      .currentDay(dietPlanTrack.getDayCount())
-      .currentWeight(dietPlanTrack.getWeight())
-      .intake(intake.getTotal())
-      .protein(dietPlanTrack.getProtein().getTotal())
-      .carbs(dietPlanTrack.getCarbs().getTotal())
-      .fat(dietPlanTrack.getFat().getTotal())
-      .days(days)
-      .weights(weights)
-      .build();
+        .title(title)
+        .taken(
+            NutrientsCalculator.findPercentage(intake.getTaken(), intake.getTotal()))
+        .duration(duration)
+        .currentDay(dietPlanTrack.getDayCount())
+        .currentWeight(dietPlanTrack.getWeight())
+        .intake(intake.getTotal())
+        .protein(dietPlanTrack.getProtein().getTotal())
+        .carbs(dietPlanTrack.getCarbs().getTotal())
+        .fat(dietPlanTrack.getFat().getTotal())
+        .days(days)
+        .weights(weights)
+        .build();
   }
 
   public boolean isThereAnyActivePlans() {
@@ -357,12 +324,10 @@ public class DietPlanService {
     try {
       DietPlan dietPlan = findDietPlanByUserId();
       DietPlanTrack dietPlanTrack = findDietPlanTrackByDietPlanId(
-        dietPlan.getId()
-      );
+          dietPlan.getId());
       Macros macros = getMacrosByCategory(
-        dietPlanTrack.getMealKcal(),
-        category
-      );
+          dietPlanTrack.getMealKcal(),
+          category);
       return NutrientsCalculator.calcTotalDeficit(macros);
     } catch (EntityNotFoundException e) {
       return 500L;
@@ -389,13 +354,24 @@ public class DietPlanService {
   }
 
   public DietPlansHistoryDTO findPastDietPlan() {
-    Optional<DietPlansHistoryDTO> dietPlan =
-      dietPlannerRepository.findFirstDietPlansHistoryByUserId(
-        userSession.getAuthenticatedUserId()
-      );
+    Optional<DietPlansHistoryDTO> dietPlan = dietPlannerRepository.findFirstDietPlansHistoryByUserId(
+        userSession.getAuthenticatedUserId());
     if (dietPlan.isEmpty()) {
       throw new EntityNotFoundException("No past plan found.");
     }
     return dietPlan.get();
+  }
+
+  private BodyMetricsResponse toBodyMetricsResponse(BodyMetricsRequest request) {
+    return BodyMetricsResponse.builder()
+        .title(request.getTitle())
+        .plan(request.getPlan())
+        .gender(request.getGender())
+        .age(request.getAge())
+        .height(request.getHeight())
+        .weight(request.getWeight())
+        .targetWeight(request.getTargetWeight())
+        .activity(request.getActivity())
+        .build();
   }
 }

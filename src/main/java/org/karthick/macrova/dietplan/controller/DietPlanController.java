@@ -40,8 +40,17 @@ public class DietPlanController {
   }
 
   @PostMapping("/tdee")
-  public BodyMetricsResponse calculateTDEE(@RequestBody BodyMetricsRequest bodyMetricsDTO) {
+  public BodyMetricsResponse calculateTDEE(
+    @RequestBody BodyMetricsRequest bodyMetricsDTO
+  ) {
     return dietPlanService.calculateTDEE(bodyMetricsDTO);
+  }
+
+  @PostMapping("/estimate")
+  public CalorieEstimationResponse estimateCalories(
+    @RequestBody CalorieEstimationRequest calorieEstimationRequest
+  ) {
+    return dietPlanService.estimateCalories(calorieEstimationRequest);
   }
 
   @PostMapping
@@ -56,28 +65,32 @@ public class DietPlanController {
 
   @PostMapping("/add-weight/{dietPlanId}")
   public DietPlanTrack addWeight(
-      @PathVariable String dietPlanId,
-      @RequestBody double weight) {
+    @PathVariable String dietPlanId,
+    @RequestBody double weight
+  ) {
     return dietPlanService.addWeight(dietPlanId, weight);
   }
 
   @GetMapping("/track/{dietPlanTrackId}")
   public DietPlanTrack getDietPlanTrackById(
-      @PathVariable @NonNull String dietPlanTrackId) {
+    @PathVariable @NonNull String dietPlanTrackId
+  ) {
     return dietPlanService.findDietPlanTrackById(dietPlanTrackId);
   }
 
   @GetMapping("/track/plan/{dietPlanId}")
   public DietPlanTrack getDietPlanTrackByDietPlanId(
-      @PathVariable String dietPlanId) {
+    @PathVariable String dietPlanId
+  ) {
     return dietPlanService.findDietPlanTrackByDietPlanId(dietPlanId);
   }
 
   @PostMapping("/{category}/{dietPlanId}")
   public DietPlanTrack updateMacros(
-      @PathVariable String category,
-      @PathVariable String dietPlanId,
-      @RequestBody Macros macros) {
+    @PathVariable String category,
+    @PathVariable String dietPlanId,
+    @RequestBody Macros macros
+  ) {
     if (MacrosConstants.validateMacro(category)) {
       return dietPlanService.updateMacros(dietPlanId, category, macros);
     }
@@ -101,7 +114,8 @@ public class DietPlanController {
 
   @GetMapping("/overview/{dietPlanId}")
   public List<DietPlanOverviewDTO> getDietPlansOverview(
-      @PathVariable String dietPlanId) {
+    @PathVariable String dietPlanId
+  ) {
     return dietPlanService.getDietPlansOverview(dietPlanId);
   }
 

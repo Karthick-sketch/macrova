@@ -1,5 +1,6 @@
 package org.karthick.macrova.util;
 
+import org.karthick.macrova.dietplan.dto.MacrosPreference;
 import org.karthick.macrova.dietplan.enums.Activity;
 import org.karthick.macrova.dietplan.enums.Gender;
 import org.karthick.macrova.dietplan.enums.Plan;
@@ -284,22 +285,8 @@ public final class NutrientsCalculator {
    *                in kilocalories
    * @return the protein target in grams, rounded to the nearest whole gram
    */
-  public static double findProtein(double deficit) {
-    return Double.valueOf(Math.round(percentageOf(deficit, 30) / 4.0));
-  }
-
-  /**
-   * Calculates the daily fat target in grams from a given calorie budget.
-   *
-   * <p>Fat is allocated 30% of the total calorie budget. Since fat provides
-   * 9 kcal/g, the gram target is derived by dividing the calorie allocation by 9.
-   *
-   * @param deficit the total daily calorie target (e.g., a deficit or surplus value)
-   *                in kilocalories
-   * @return the fat target in grams, rounded to the nearest whole gram
-   */
-  public static double findFat(double deficit) {
-    return Double.valueOf(Math.round(percentageOf(deficit, 30) / 9.0));
+  public static double findProtein(double deficit, int percent) {
+    return Double.valueOf(Math.round(percentageOf(deficit, percent) / 4.0));
   }
 
   /**
@@ -313,7 +300,53 @@ public final class NutrientsCalculator {
    *                in kilocalories
    * @return the carbohydrate target in grams, rounded to the nearest whole gram
    */
-  public static double findCarbs(double deficit) {
-    return Double.valueOf(Math.round(percentageOf(deficit, 40) / 4.0));
+  public static double findCarbs(double deficit, int percent) {
+    return Double.valueOf(Math.round(percentageOf(deficit, percent) / 4.0));
+  }
+
+  /**
+   * Calculates the daily fat target in grams from a given calorie budget.
+   *
+   * <p>Fat is allocated 30% of the total calorie budget. Since fat provides
+   * 9 kcal/g, the gram target is derived by dividing the calorie allocation by 9.
+   *
+   * @param deficit the total daily calorie target (e.g., a deficit or surplus value)
+   *                in kilocalories
+   * @return the fat target in grams, rounded to the nearest whole gram
+   */
+  public static double findFat(double deficit, int percent) {
+    return Double.valueOf(Math.round(percentageOf(deficit, percent) / 9.0));
+  }
+
+  public static MacrosPreference findBalancedMacros(double deficit) {
+    return new MacrosPreference(
+      findProtein(deficit, 30),
+      findCarbs(deficit, 40),
+      findFat(deficit, 30)
+    );
+  }
+
+  public static MacrosPreference findHighProteinMacros(double deficit) {
+    return new MacrosPreference(
+      findProtein(deficit, 40),
+      findCarbs(deficit, 35),
+      findFat(deficit, 25)
+    );
+  }
+
+  public static MacrosPreference findLowCarbMacros(double deficit) {
+    return new MacrosPreference(
+      findProtein(deficit, 35),
+      findCarbs(deficit, 25),
+      findFat(deficit, 40)
+    );
+  }
+
+  public static MacrosPreference findLowFatMacros(double deficit) {
+    return new MacrosPreference(
+      findProtein(deficit, 30),
+      findCarbs(deficit, 50),
+      findFat(deficit, 20)
+    );
   }
 }

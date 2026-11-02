@@ -31,4 +31,6 @@ public interface DietPlanRepository extends MongoRepository<DietPlan, String> {
   Optional<DietPlan> findByUserIdAndActiveIsTrue(String userId);
 
   Optional<DietPlan> findByActiveTrue();
+
+  Optional<DietPlan> findByUserIdAndPlanStatusPending(String userId);
 }

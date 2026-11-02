@@ -1,4 +1,4 @@
-package org.karthick.macrova.dietplan.dto;
+package org.karthick.macrova.shared.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,8 +7,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class MacrosQuantity {
+public class MacroQuantity {
 
-  private double minimum;
-  private double maximum;
+  private double min;
+  private double max;
 }

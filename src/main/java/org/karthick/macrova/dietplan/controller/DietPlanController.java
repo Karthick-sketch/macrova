@@ -3,8 +3,9 @@ package org.karthick.macrova.dietplan.controller;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import org.karthick.macrova.dietplan.dto.*;
+import org.karthick.macrova.dietplan.dto.form.*;
 import org.karthick.macrova.dietplan.entity.*;
-import org.karthick.macrova.dietplan.service.DietPlanService;
+import org.karthick.macrova.dietplan.service.*;
 import org.karthick.macrova.exception.BadRequestException;
 import org.karthick.macrova.shared.model.Macros;
 import org.karthick.macrova.shared.model.MealKcal;
@@ -12,13 +13,42 @@ import org.karthick.macrova.util.constants.MacrosConstants;
 import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
 
-@AllArgsConstructor
 @RestController
 @RequestMapping("/diet-plan")
+@AllArgsConstructor
 public class DietPlanController {
 
   private final DietPlanService dietPlanService;
+  private final DietPlanFormService dietPlanFormService;
 
+  // Diet plan form related endpoints
+  @PostMapping("/form/body-metrics")
+  public BodyMetricsResponse createDietPlanBodyMetrics(
+    @RequestBody BodyMetricsRequest request
+  ) {
+    return dietPlanFormService.createDietPlanBodyMetrics(request);
+  }
+
+  @PostMapping("/form/goal-selection")
+  public CaloriesEstimationResponse createDietPlanGoalSelection(
+    @RequestBody GoalSelectionRequest request
+  ) {
+    return dietPlanFormService.createDietPlanGoalSelection(request);
+  }
+
+  @PostMapping("/form/meal-preference")
+  public DietPlan createDietPlanMealPreference(
+    @RequestBody MealPreferenceRequest request
+  ) {
+    return dietPlanFormService.createDietPlanMealPreference(request);
+  }
+
+  @PostMapping("/form/create")
+  public DietPlan createDietPlan() {
+    return dietPlanFormService.createDietPlan();
+  }
+
+  // Diet plan related endpoints
   @GetMapping("/all")
   public List<DietPlan> getAllDietPlans() {
     return dietPlanService.findAllDietPlans();
@@ -37,20 +67,6 @@ public class DietPlanController {
   @GetMapping("/{dietPlanId}")
   public DietPlan getDietPlanById(@PathVariable String dietPlanId) {
     return dietPlanService.findDietPlanById(dietPlanId);
-  }
-
-  @PostMapping("/tdee")
-  public BodyMetricsResponse calculateTDEE(
-    @RequestBody BodyMetricsRequest bodyMetricsDTO
-  ) {
-    return dietPlanService.calculateTDEE(bodyMetricsDTO);
-  }
-
-  @PostMapping("/estimate")
-  public CalorieEstimationResponse estimateCalories(
-    @RequestBody CalorieEstimationRequest calorieEstimationRequest
-  ) {
-    return dietPlanService.estimateCalories(calorieEstimationRequest);
   }
 
   @PostMapping

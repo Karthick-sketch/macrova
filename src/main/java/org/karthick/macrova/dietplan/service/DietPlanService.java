@@ -11,6 +11,7 @@ import org.karthick.macrova.dietplan.dto.*;
 import org.karthick.macrova.dietplan.entity.*;
 import org.karthick.macrova.dietplan.enums.Goal;
 import org.karthick.macrova.dietplan.enums.Plan;
+import org.karthick.macrova.dietplan.enums.PlanStatus;
 import org.karthick.macrova.dietplan.repository.*;
 import org.karthick.macrova.exception.BadRequestException;
 import org.karthick.macrova.exception.EntityNotFoundException;
@@ -66,40 +67,11 @@ public class DietPlanService {
     return dietPlan.get();
   }
 
-  public BodyMetricsResponse calculateTDEE(BodyMetricsRequest request) {
-    double tdee = Math.round(
-      NutrientsCalculator.findTDEE(
-        request.getAge(),
-        request.getWeight(),
-        request.getHeight(),
-        request.getGender(),
-        request.getActivity()
-      )
-    );
-    BodyMetricsResponse response = toBodyMetricsResponse(request);
-    response.setTdee(tdee);
-    return response;
-  }
-
-  public CalorieEstimationResponse estimateCalories(
-    CalorieEstimationRequest request
-  ) {
-    CalorieEstimationResponse response = new CalorieEstimationResponse();
-    response.setTdee(request.getTdee());
-    response.setCalorieDeficit(
-      NutrientsCalculator.findDeficit(
-        request.getTdee(),
-        request.getGoal().getValue()
-      )
-    );
-    return response;
-  }
-
   public DietPlan createDietPlan(DietPlan dietPlan) {
     validateDietPlan(dietPlan);
     dietPlan.setTodayWeight(dietPlan.getWeight());
     dietPlan.setUserId(userSession.getAuthenticatedUserId());
-    dietPlan.setActive(true);
+    dietPlan.setPlanStatus(PlanStatus.ACTIVE);
     dietPlannerRepository.save(dietPlan);
     createDietPlanTrack(dietPlan);
     return dietPlan;
@@ -151,10 +123,12 @@ public class DietPlanService {
     );
     dietPlanTrack.setIntake(new Calories(intake));
     dietPlanTrack.setProtein(
-      new Calories(NutrientsCalculator.findProtein(intake))
+      new Calories(NutrientsCalculator.findProtein(intake, 30))
     );
-    dietPlanTrack.setFat(new Calories(NutrientsCalculator.findFat(intake)));
-    dietPlanTrack.setCarbs(new Calories(NutrientsCalculator.findCarbs(intake)));
+    dietPlanTrack.setFat(new Calories(NutrientsCalculator.findFat(intake, 30)));
+    dietPlanTrack.setCarbs(
+      new Calories(NutrientsCalculator.findCarbs(intake, 40))
+    );
     dietPlanTrack.setMealKcal(splitForMealKcal(dietPlanTrack));
   }
 
@@ -393,7 +367,7 @@ public class DietPlanService {
       DietPlan dietPlan = findDietPlanByUserId();
       int dayCount = countDays(dietPlan.getCreatedAt(), LocalDate.now());
       if (dayCount > dietPlan.getDuration()) {
-        dietPlan.setActive(false);
+        dietPlan.setPlanStatus(PlanStatus.INACTIVE);
         dietPlannerRepository.save(dietPlan);
         return true;
       }
@@ -412,20 +386,5 @@ public class DietPlanService {
       throw new EntityNotFoundException("No past plan found.");
     }
     return dietPlan.get();
-  }
-
-  private BodyMetricsResponse toBodyMetricsResponse(
-    BodyMetricsRequest request
-  ) {
-    return BodyMetricsResponse.builder()
-      .title(request.getTitle())
-      .plan(request.getPlan())
-      .gender(request.getGender())
-      .age(request.getAge())
-      .height(request.getHeight())
-      .weight(request.getWeight())
-      .targetWeight(request.getTargetWeight())
-      .activity(request.getActivity())
-      .build();
   }
 }

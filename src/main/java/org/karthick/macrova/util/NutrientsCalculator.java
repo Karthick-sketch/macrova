@@ -1,9 +1,10 @@
 package org.karthick.macrova.util;
 
-import org.karthick.macrova.dietplan.dto.MacrosPreference;
 import org.karthick.macrova.dietplan.enums.Activity;
 import org.karthick.macrova.dietplan.enums.Gender;
 import org.karthick.macrova.dietplan.enums.Plan;
+import org.karthick.macrova.shared.model.MacroPreference;
+import org.karthick.macrova.shared.model.MacroQuantity;
 import org.karthick.macrova.shared.model.Macros;
 
 /**
@@ -318,32 +319,47 @@ public final class NutrientsCalculator {
     return Double.valueOf(Math.round(percentageOf(deficit, percent) / 9.0));
   }
 
-  public static MacrosPreference findBalancedMacros(double deficit) {
-    return new MacrosPreference(
+  public static MacroQuantity findProteinQuantity(double deficit) {
+    return new MacroQuantity(
+      findProtein(deficit, 15),
+      findProtein(deficit, 50)
+    );
+  }
+
+  public static MacroQuantity findCarbsQuantity(double deficit) {
+    return new MacroQuantity(findCarbs(deficit, 20), findCarbs(deficit, 65));
+  }
+
+  public static MacroQuantity findFatQuantity(double deficit) {
+    return new MacroQuantity(findFat(deficit, 20), findFat(deficit, 40));
+  }
+
+  public static MacroPreference findBalancedMacros(double deficit) {
+    return new MacroPreference(
       findProtein(deficit, 30),
       findCarbs(deficit, 40),
       findFat(deficit, 30)
     );
   }
 
-  public static MacrosPreference findHighProteinMacros(double deficit) {
-    return new MacrosPreference(
+  public static MacroPreference findHighProteinMacros(double deficit) {
+    return new MacroPreference(
       findProtein(deficit, 40),
       findCarbs(deficit, 35),
       findFat(deficit, 25)
     );
   }
 
-  public static MacrosPreference findLowCarbMacros(double deficit) {
-    return new MacrosPreference(
+  public static MacroPreference findLowCarbMacros(double deficit) {
+    return new MacroPreference(
       findProtein(deficit, 35),
       findCarbs(deficit, 25),
       findFat(deficit, 40)
     );
   }
 
-  public static MacrosPreference findLowFatMacros(double deficit) {
-    return new MacrosPreference(
+  public static MacroPreference findLowFatMacros(double deficit) {
+    return new MacroPreference(
       findProtein(deficit, 30),
       findCarbs(deficit, 50),
       findFat(deficit, 20)

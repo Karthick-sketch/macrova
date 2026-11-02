@@ -1,12 +1,19 @@
 package org.karthick.macrova.dietplan.entity;
 
 import java.time.LocalDate;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.karthick.macrova.dietplan.enums.*;
+import org.karthick.macrova.shared.model.MacroPreference;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Document(collection = "diet_plans")
 public class DietPlan {
 
@@ -24,12 +31,16 @@ public class DietPlan {
   private double targetWeight;
   private int duration;
   private Activity activity;
-  private String userId;
-  private boolean active;
+  private double tdee;
+  private double targetCalories;
+  private DietTypes dietTypes;
+  private MealTypes mealTypes;
+  private MacroPreference macroPreference;
+  private int mealCount;
+  private boolean eveningSnack;
   private LocalDate createdAt;
+  private String userId;
 
-  public DietPlan() {
-    this.active = true;
-    this.createdAt = LocalDate.now();
-  }
+  @Builder.Default
+  private PlanStatus planStatus = PlanStatus.PENDING;
 }

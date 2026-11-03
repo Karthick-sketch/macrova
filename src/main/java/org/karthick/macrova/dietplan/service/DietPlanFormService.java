@@ -6,6 +6,7 @@ import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.karthick.macrova.dietplan.dto.form.*;
 import org.karthick.macrova.dietplan.entity.DietPlan;
+import org.karthick.macrova.dietplan.enums.FormStatus;
 import org.karthick.macrova.dietplan.enums.Plan;
 import org.karthick.macrova.dietplan.enums.PlanStatus;
 import org.karthick.macrova.dietplan.repository.DietPlanRepository;
@@ -24,6 +25,37 @@ public class DietPlanFormService {
 
   private final UserSession userSession;
 
+  public DietPlanFormStatus getDietPlanFormStatus() {
+    DietPlanFormStatus dietPlanFormStatus = new DietPlanFormStatus();
+    Optional<DietPlan> optionalDietPlan =
+      dietPlanRepository.findByUserIdAndPlanStatus(
+        userSession.getAuthenticatedUserId(),
+        PlanStatus.ACTIVE
+      );
+    DietPlan dietPlan = null;
+    if (optionalDietPlan.isPresent()) {
+      dietPlan = optionalDietPlan.get();
+      dietPlanFormStatus.setDietPlan(dietPlan);
+    } else {
+      dietPlan = getPendingDietPlan();
+      if (FormStatus.GOAL_SELECTION.equals(dietPlan.getFormStatus())) {
+        dietPlanFormStatus.setBodyMetrics(toBodyMetricsResponse(dietPlan));
+      } else if (FormStatus.MEAL_PREFERENCE.equals(dietPlan.getFormStatus())) {
+        dietPlanFormStatus.setCaloriesEstimation(
+          toCaloriesEstimationResponse(
+            dietPlan.getTdee(),
+            dietPlan.getTargetCalories()
+          )
+        );
+      } else {
+        dietPlanFormStatus.setDietPlan(dietPlan);
+      }
+    }
+    dietPlanFormStatus.setFormStatus(dietPlan.getFormStatus());
+    dietPlanFormStatus.setPlanStatus(dietPlan.getPlanStatus());
+    return dietPlanFormStatus;
+  }
+
   public BodyMetricsResponse createDietPlanBodyMetrics(
     BodyMetricsRequest request
   ) {
@@ -39,6 +71,7 @@ public class DietPlanFormService {
         )
       )
     );
+    dietPlan.setFormStatus(FormStatus.GOAL_SELECTION);
     return toBodyMetricsResponse(dietPlanRepository.save(dietPlan));
   }
 
@@ -48,6 +81,7 @@ public class DietPlanFormService {
     DietPlan dietPlan = getPendingDietPlan();
     dietPlan.setGoal(request.getGoal());
     dietPlan.setDuration(request.getDuration());
+    dietPlan.setFormStatus(FormStatus.MEAL_PREFERENCE);
 
     if (Plan.WEIGHT_LOSS.equals(dietPlan.getPlan())) {
       dietPlan.setTargetCalories(
@@ -81,13 +115,15 @@ public class DietPlanFormService {
     dietPlan.setMacros(request.getMacros());
     dietPlan.setMealCount(request.getMealCount());
     dietPlan.setEveningSnack(request.isEveningSnack());
+    dietPlan.setFormStatus(FormStatus.PREVIEW);
     return dietPlanRepository.save(dietPlan);
   }
 
   public DietPlan createDietPlan() {
     DietPlan dietPlan = getPendingDietPlan();
-    dietPlan.setPlanStatus(PlanStatus.ACTIVE);
     dietPlan.setCreatedAt(LocalDate.now());
+    dietPlan.setPlanStatus(PlanStatus.ACTIVE);
+    dietPlan.setFormStatus(FormStatus.COMPLETED);
     return dietPlanRepository.save(dietPlan);
   }
 

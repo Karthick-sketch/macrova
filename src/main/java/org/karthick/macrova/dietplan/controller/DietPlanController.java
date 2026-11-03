@@ -22,6 +22,11 @@ public class DietPlanController {
   private final DietPlanFormService dietPlanFormService;
 
   // Diet plan form related endpoints
+  @GetMapping("/form/status")
+  public DietPlanFormStatus getDietPlanFormStatus() {
+    return dietPlanFormService.getDietPlanFormStatus();
+  }
+
   @PostMapping("/form/body-metrics")
   public BodyMetricsResponse createDietPlanBodyMetrics(
     @RequestBody BodyMetricsRequest request

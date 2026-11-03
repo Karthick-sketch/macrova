@@ -43,4 +43,7 @@ public class DietPlan {
 
   @Builder.Default
   private PlanStatus planStatus = PlanStatus.PENDING;
+
+  @Builder.Default
+  private FormStatus formStatus = FormStatus.BODY_METRICS;
 }

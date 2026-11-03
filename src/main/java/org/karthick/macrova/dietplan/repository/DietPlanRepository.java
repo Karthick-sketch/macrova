@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import org.karthick.macrova.dietplan.dto.DietPlansHistoryDTO;
 import org.karthick.macrova.dietplan.entity.DietPlan;
+import org.karthick.macrova.dietplan.enums.PlanStatus;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 
@@ -28,9 +29,8 @@ public interface DietPlanRepository extends MongoRepository<DietPlan, String> {
 
   Optional<DietPlan> findByIdAndUserId(String id, String userId);
 
-  Optional<DietPlan> findByUserIdAndActiveIsTrue(String userId);
-
-  Optional<DietPlan> findByActiveTrue();
-
-  Optional<DietPlan> findByUserIdAndPlanStatusPending(String userId);
+  Optional<DietPlan> findByUserIdAndPlanStatus(
+    String userId,
+    PlanStatus planStatus
+  );
 }

@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class MacroQuantity {
+public class MacrosQuantity {
 
   private double min;
   private double max;

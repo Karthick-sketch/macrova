@@ -4,8 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.karthick.macrova.shared.model.MacroPreference;
-import org.karthick.macrova.shared.model.MacroQuantity;
+import org.karthick.macrova.shared.model.MacrosPreference;
+import org.karthick.macrova.shared.model.MacrosQuantity;
 
 @Data
 @Builder
@@ -15,11 +15,8 @@ public class CaloriesEstimationResponse {
 
   private double tdee;
   private double targetCalories;
-  private MacroQuantity proteinQuantity;
-  private MacroQuantity carbsQuantity;
-  private MacroQuantity fatQuantity;
-  private MacroPreference balanced;
-  private MacroPreference highProtein;
-  private MacroPreference lowCarb;
-  private MacroPreference lowFat;
+  private MacrosQuantity proteinQuantity;
+  private MacrosQuantity carbsQuantity;
+  private MacrosQuantity fatQuantity;
+  private MacrosPreference macrosPreference;
 }

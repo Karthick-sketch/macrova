@@ -17,7 +17,7 @@ import org.karthick.macrova.exception.BadRequestException;
 import org.karthick.macrova.exception.EntityNotFoundException;
 import org.karthick.macrova.security.UserSession;
 import org.karthick.macrova.shared.model.Calories;
-import org.karthick.macrova.shared.model.Macros;
+import org.karthick.macrova.shared.model.MacrosTrack;
 import org.karthick.macrova.shared.model.MealKcal;
 import org.karthick.macrova.util.NutrientsCalculator;
 import org.karthick.macrova.util.constants.MacrosConstants;
@@ -58,8 +58,9 @@ public class DietPlanService {
 
   public DietPlan findDietPlanByUserId() {
     Optional<DietPlan> dietPlan =
-      dietPlannerRepository.findByUserIdAndActiveIsTrue(
-        userSession.getAuthenticatedUserId()
+      dietPlannerRepository.findByUserIdAndPlanStatus(
+        userSession.getAuthenticatedUserId(),
+        PlanStatus.ACTIVE
       );
     if (dietPlan.isEmpty()) {
       throw new EntityNotFoundException("Diet plan not found");
@@ -185,10 +186,10 @@ public class DietPlanService {
   public DietPlanTrack updateMacros(
     String dietPlanId,
     String category,
-    Macros macros
+    MacrosTrack macros
   ) {
     DietPlanTrack dietPlanTrack = findDietPlanTrackByDietPlanId(dietPlanId);
-    Macros dietPlanMacros = getMacrosByCategory(
+    MacrosTrack dietPlanMacros = getMacrosByCategory(
       dietPlanTrack.getMealKcal(),
       category
     );
@@ -200,7 +201,7 @@ public class DietPlanService {
     return dietPlanTrackRepository.save(dietPlanTrack);
   }
 
-  private Macros getMacrosByCategory(MealKcal mealKcal, String category) {
+  private MacrosTrack getMacrosByCategory(MealKcal mealKcal, String category) {
     return switch (category) {
       case MacrosConstants.BREAKFAST -> mealKcal.getBreakfast();
       case MacrosConstants.LUNCH -> mealKcal.getLunch();
@@ -211,7 +212,7 @@ public class DietPlanService {
 
   private double calcDeficitTaken(DietPlanTrack dietPlanTrack) {
     return NutrientsCalculator.calcTakenDeficit(
-      new Macros(
+      new MacrosTrack(
         dietPlanTrack.getProtein(),
         dietPlanTrack.getFat(),
         dietPlanTrack.getCarbs()
@@ -260,7 +261,7 @@ public class DietPlanService {
   }
 
   private MealKcal splitForMealKcal(DietPlanTrack dietPlanTrack) {
-    Macros macros = new Macros(
+    MacrosTrack macros = new MacrosTrack(
       dietPlanTrack.getProtein(),
       dietPlanTrack.getFat(),
       dietPlanTrack.getCarbs()
@@ -339,7 +340,12 @@ public class DietPlanService {
   }
 
   public boolean isThereAnyActivePlans() {
-    return dietPlannerRepository.findByActiveTrue().isPresent();
+    return dietPlannerRepository
+      .findByUserIdAndPlanStatus(
+        userSession.getAuthenticatedUserId(),
+        PlanStatus.ACTIVE
+      )
+      .isPresent();
   }
 
   public long getCaloriesByMealCategory(String category) {
@@ -348,7 +354,7 @@ public class DietPlanService {
       DietPlanTrack dietPlanTrack = findDietPlanTrackByDietPlanId(
         dietPlan.getId()
       );
-      Macros macros = getMacrosByCategory(
+      MacrosTrack macros = getMacrosByCategory(
         dietPlanTrack.getMealKcal(),
         category
       );

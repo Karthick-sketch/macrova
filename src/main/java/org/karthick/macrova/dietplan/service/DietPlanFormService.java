@@ -11,6 +11,7 @@ import org.karthick.macrova.dietplan.enums.PlanStatus;
 import org.karthick.macrova.dietplan.repository.DietPlanRepository;
 import org.karthick.macrova.exception.BadRequestException;
 import org.karthick.macrova.security.UserSession;
+import org.karthick.macrova.shared.model.MacrosPreference;
 import org.karthick.macrova.util.NutrientsCalculator;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
@@ -63,14 +64,6 @@ public class DietPlanFormService {
         )
       );
     } else {
-      Optional<DietPlan> optionalDietPlan =
-        dietPlanRepository.findByUserIdAndPlanStatusPending(
-          userSession.getAuthenticatedUserId()
-        );
-      if (optionalDietPlan.isEmpty()) {
-        throw new BadRequestException("No pending diet plan found.");
-      }
-
       throw new BadRequestException("Invalid Diet plan");
     }
 
@@ -85,7 +78,7 @@ public class DietPlanFormService {
     DietPlan dietPlan = getPendingDietPlan();
     dietPlan.setDietTypes(request.getDietType());
     dietPlan.setMealTypes(request.getMealType());
-    dietPlan.setMacroPreference(request.getMacroPreference());
+    dietPlan.setMacros(request.getMacros());
     dietPlan.setMealCount(request.getMealCount());
     dietPlan.setEveningSnack(request.isEveningSnack());
     return dietPlanRepository.save(dietPlan);
@@ -100,8 +93,9 @@ public class DietPlanFormService {
 
   private DietPlan getPendingDietPlan() {
     Optional<DietPlan> optionalDietPlan =
-      dietPlanRepository.findByUserIdAndPlanStatusPending(
-        userSession.getAuthenticatedUserId()
+      dietPlanRepository.findByUserIdAndPlanStatus(
+        userSession.getAuthenticatedUserId(),
+        PlanStatus.PENDING
       );
     if (optionalDietPlan.isEmpty()) {
       throw new BadRequestException("No pending diet plan found.");
@@ -146,6 +140,12 @@ public class DietPlanFormService {
       .proteinQuantity(NutrientsCalculator.findProteinQuantity(targetCalories))
       .carbsQuantity(NutrientsCalculator.findCarbsQuantity(targetCalories))
       .fatQuantity(NutrientsCalculator.findFatQuantity(targetCalories))
+      .macrosPreference(toMacrosPreference(targetCalories))
+      .build();
+  }
+
+  private MacrosPreference toMacrosPreference(double targetCalories) {
+    return MacrosPreference.builder()
       .balanced(NutrientsCalculator.findBalancedMacros(targetCalories))
       .highProtein(NutrientsCalculator.findHighProteinMacros(targetCalories))
       .lowCarb(NutrientsCalculator.findLowCarbMacros(targetCalories))

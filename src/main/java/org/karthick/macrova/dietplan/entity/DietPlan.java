@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.karthick.macrova.dietplan.enums.*;
-import org.karthick.macrova.shared.model.MacroPreference;
+import org.karthick.macrova.shared.model.Macros;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -35,7 +35,7 @@ public class DietPlan {
   private double targetCalories;
   private DietTypes dietTypes;
   private MealTypes mealTypes;
-  private MacroPreference macroPreference;
+  private Macros macros;
   private int mealCount;
   private boolean eveningSnack;
   private LocalDate createdAt;

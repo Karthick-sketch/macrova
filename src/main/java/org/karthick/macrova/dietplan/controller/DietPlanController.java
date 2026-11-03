@@ -7,7 +7,7 @@ import org.karthick.macrova.dietplan.dto.form.*;
 import org.karthick.macrova.dietplan.entity.*;
 import org.karthick.macrova.dietplan.service.*;
 import org.karthick.macrova.exception.BadRequestException;
-import org.karthick.macrova.shared.model.Macros;
+import org.karthick.macrova.shared.model.MacrosTrack;
 import org.karthick.macrova.shared.model.MealKcal;
 import org.karthick.macrova.util.constants.MacrosConstants;
 import org.springframework.lang.NonNull;
@@ -105,7 +105,7 @@ public class DietPlanController {
   public DietPlanTrack updateMacros(
     @PathVariable String category,
     @PathVariable String dietPlanId,
-    @RequestBody Macros macros
+    @RequestBody MacrosTrack macros
   ) {
     if (MacrosConstants.validateMacro(category)) {
       return dietPlanService.updateMacros(dietPlanId, category, macros);

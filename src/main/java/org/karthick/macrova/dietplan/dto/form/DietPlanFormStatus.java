@@ -15,6 +15,7 @@ public class DietPlanFormStatus {
   private PlanStatus planStatus;
   private FormStatus formStatus;
   private DietPlan dietPlan;
-  private BodyMetricsResponse bodyMetrics;
+  private BodyMetricsRequest bodyMetricsRequest;
+  private BodyMetricsResponse bodyMetricsResponse;
   private CaloriesEstimationResponse caloriesEstimation;
 }

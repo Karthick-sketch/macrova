@@ -1,7 +1,6 @@
 package org.karthick.macrova.dietplan.service;
 
 import java.time.LocalDate;
-import java.util.Objects;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.karthick.macrova.dietplan.dto.form.*;
@@ -14,7 +13,7 @@ import org.karthick.macrova.exception.BadRequestException;
 import org.karthick.macrova.security.UserSession;
 import org.karthick.macrova.shared.model.MacrosPreference;
 import org.karthick.macrova.util.NutrientsCalculator;
-import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -26,40 +25,23 @@ public class DietPlanFormService {
   private final UserSession userSession;
 
   public DietPlanFormStatus getDietPlanFormStatus() {
-    DietPlanFormStatus dietPlanFormStatus = new DietPlanFormStatus();
-    Optional<DietPlan> optionalDietPlan =
-      dietPlanRepository.findByUserIdAndPlanStatus(
-        userSession.getAuthenticatedUserId(),
-        PlanStatus.ACTIVE
-      );
-    DietPlan dietPlan = null;
-    if (optionalDietPlan.isPresent()) {
-      dietPlan = optionalDietPlan.get();
-      dietPlanFormStatus.setDietPlan(dietPlan);
-    } else {
-      dietPlan = getPendingDietPlan();
-      if (FormStatus.GOAL_SELECTION.equals(dietPlan.getFormStatus())) {
-        dietPlanFormStatus.setBodyMetrics(toBodyMetricsResponse(dietPlan));
-      } else if (FormStatus.MEAL_PREFERENCE.equals(dietPlan.getFormStatus())) {
-        dietPlanFormStatus.setCaloriesEstimation(
-          toCaloriesEstimationResponse(
-            dietPlan.getTdee(),
-            dietPlan.getTargetCalories()
-          )
-        );
-      } else {
-        dietPlanFormStatus.setDietPlan(dietPlan);
-      }
-    }
-    dietPlanFormStatus.setFormStatus(dietPlan.getFormStatus());
-    dietPlanFormStatus.setPlanStatus(dietPlan.getPlanStatus());
-    return dietPlanFormStatus;
+    return getDietPlanFormStatus(null);
+  }
+
+  public DietPlanFormStatus getDietPlanFormDetails(CurrentFormStatus status) {
+    return getDietPlanFormStatus(status.getFormStatus());
   }
 
   public BodyMetricsResponse createDietPlanBodyMetrics(
     BodyMetricsRequest request
   ) {
+    Optional<DietPlan> optionalDietPlan =
+      dietPlanRepository.findByUserIdAndPlanStatus(
+        userSession.getAuthenticatedUserId(),
+        PlanStatus.PENDING
+      );
     DietPlan dietPlan = toDietPlan(request);
+    optionalDietPlan.ifPresent(d -> dietPlan.setId(d.getId()));
     dietPlan.setTdee(
       Math.round(
         NutrientsCalculator.findTDEE(
@@ -102,17 +84,15 @@ public class DietPlanFormService {
     }
 
     dietPlan = dietPlanRepository.save(dietPlan);
-    return toCaloriesEstimationResponse(
-      dietPlan.getTdee(),
-      dietPlan.getTargetCalories()
-    );
+    return toCaloriesEstimationResponse(dietPlan);
   }
 
   public DietPlan createDietPlanMealPreference(MealPreferenceRequest request) {
     DietPlan dietPlan = getPendingDietPlan();
-    dietPlan.setDietTypes(request.getDietType());
-    dietPlan.setMealTypes(request.getMealType());
+    dietPlan.setCurrentCalories(request.getCurrentCalories());
     dietPlan.setMacros(request.getMacros());
+    dietPlan.setDietType(request.getDietType());
+    dietPlan.setMealType(request.getMealType());
     dietPlan.setMealCount(request.getMealCount());
     dietPlan.setEveningSnack(request.isEveningSnack());
     dietPlan.setFormStatus(FormStatus.PREVIEW);
@@ -121,6 +101,7 @@ public class DietPlanFormService {
 
   public DietPlan createDietPlan() {
     DietPlan dietPlan = getPendingDietPlan();
+    dietPlan.setTargetCalories(dietPlan.getCurrentCalories());
     dietPlan.setCreatedAt(LocalDate.now());
     dietPlan.setPlanStatus(PlanStatus.ACTIVE);
     dietPlan.setFormStatus(FormStatus.COMPLETED);
@@ -140,21 +121,74 @@ public class DietPlanFormService {
     return optionalDietPlan.get();
   }
 
-  private @NonNull DietPlan toDietPlan(BodyMetricsRequest request) {
-    return Objects.requireNonNull(
-      DietPlan.builder()
-        .title(request.getTitle())
-        .plan(request.getPlan())
-        .gender(request.getGender())
-        .age(request.getAge())
-        .height(request.getHeight())
-        .weight(request.getWeight())
-        .todayWeight(request.getWeight())
-        .targetWeight(request.getTargetWeight())
-        .activity(request.getActivity())
-        .userId(userSession.getAuthenticatedUserId())
-        .build()
-    );
+  private DietPlanFormStatus getDietPlanFormStatus(
+    @Nullable FormStatus status
+  ) {
+    Optional<DietPlan> optionalDietPlan =
+      dietPlanRepository.findByUserIdAndPlanStatus(
+        userSession.getAuthenticatedUserId(),
+        PlanStatus.ACTIVE
+      );
+    DietPlanFormStatus dietPlanFormStatus = new DietPlanFormStatus();
+    DietPlan dietPlan = null;
+    if (optionalDietPlan.isPresent()) {
+      dietPlan = optionalDietPlan.get();
+      dietPlanFormStatus.setDietPlan(dietPlan);
+    } else {
+      dietPlan = getPendingDietPlan();
+
+      // If status is null, set it to the diet plan's form status
+      if (status == null) {
+        status = dietPlan.getFormStatus();
+      }
+
+      if (FormStatus.BODY_METRICS.equals(status)) {
+        dietPlanFormStatus.setBodyMetricsRequest(
+          toBodyMetricsRequest(dietPlan)
+        );
+      } else if (FormStatus.GOAL_SELECTION.equals(status)) {
+        dietPlanFormStatus.setBodyMetricsResponse(
+          toBodyMetricsResponse(dietPlan)
+        );
+      } else if (FormStatus.MEAL_PREFERENCE.equals(status)) {
+        dietPlanFormStatus.setCaloriesEstimation(
+          toCaloriesEstimationResponse(dietPlan)
+        );
+      } else {
+        dietPlanFormStatus.setDietPlan(dietPlan);
+      }
+    }
+    dietPlanFormStatus.setFormStatus(dietPlan.getFormStatus());
+    dietPlanFormStatus.setPlanStatus(dietPlan.getPlanStatus());
+    return dietPlanFormStatus;
+  }
+
+  private DietPlan toDietPlan(BodyMetricsRequest request) {
+    return DietPlan.builder()
+      .title(request.getTitle())
+      .plan(request.getPlan())
+      .gender(request.getGender())
+      .age(request.getAge())
+      .height(request.getHeight())
+      .weight(request.getWeight())
+      .todayWeight(request.getWeight())
+      .targetWeight(request.getTargetWeight())
+      .activity(request.getActivity())
+      .userId(userSession.getAuthenticatedUserId())
+      .build();
+  }
+
+  private BodyMetricsRequest toBodyMetricsRequest(DietPlan dietPlan) {
+    return BodyMetricsRequest.builder()
+      .title(dietPlan.getTitle())
+      .plan(dietPlan.getPlan())
+      .gender(dietPlan.getGender())
+      .age(dietPlan.getAge())
+      .height(dietPlan.getHeight())
+      .weight(dietPlan.getWeight())
+      .targetWeight(dietPlan.getTargetWeight())
+      .activity(dietPlan.getActivity())
+      .build();
   }
 
   private BodyMetricsResponse toBodyMetricsResponse(DietPlan dietPlan) {
@@ -167,11 +201,11 @@ public class DietPlanFormService {
   }
 
   private CaloriesEstimationResponse toCaloriesEstimationResponse(
-    double tdee,
-    double targetCalories
+    DietPlan dietPlan
   ) {
+    double targetCalories = dietPlan.getTargetCalories();
     return CaloriesEstimationResponse.builder()
-      .tdee(tdee)
+      .tdee(dietPlan.getTdee())
       .targetCalories(targetCalories)
       .proteinQuantity(NutrientsCalculator.findProteinQuantity(targetCalories))
       .carbsQuantity(NutrientsCalculator.findCarbsQuantity(targetCalories))

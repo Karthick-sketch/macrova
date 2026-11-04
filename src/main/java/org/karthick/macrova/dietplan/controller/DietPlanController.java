@@ -27,6 +27,13 @@ public class DietPlanController {
     return dietPlanFormService.getDietPlanFormStatus();
   }
 
+  @PostMapping("/form/status")
+  public DietPlanFormStatus getDietPlanFormDetails(
+    @RequestBody CurrentFormStatus status
+  ) {
+    return dietPlanFormService.getDietPlanFormDetails(status);
+  }
+
   @PostMapping("/form/body-metrics")
   public BodyMetricsResponse createDietPlanBodyMetrics(
     @RequestBody BodyMetricsRequest request

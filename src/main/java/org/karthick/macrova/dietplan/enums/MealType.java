@@ -1,6 +1,6 @@
 package org.karthick.macrova.dietplan.enums;
 
-public enum MealTypes {
+public enum MealType {
   NON_VEGETARIAN,
   VEGETARIAN,
   VEGAN,

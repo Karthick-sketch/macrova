@@ -33,8 +33,9 @@ public class DietPlan {
   private Activity activity;
   private double tdee;
   private double targetCalories;
-  private DietTypes dietTypes;
-  private MealTypes mealTypes;
+  private double currentCalories;
+  private DietType dietType;
+  private MealType mealType;
   private Macros macros;
   private int mealCount;
   private boolean eveningSnack;

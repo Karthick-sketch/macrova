@@ -22,6 +22,8 @@ public class DietPlanFormService {
 
   private final DietPlanRepository dietPlanRepository;
 
+  private final DietPlanService dietPlanService;
+
   private final UserSession userSession;
 
   public DietPlanFormStatus getDietPlanFormStatus() {
@@ -101,11 +103,17 @@ public class DietPlanFormService {
 
   public DietPlan createDietPlan() {
     DietPlan dietPlan = getPendingDietPlan();
+
+    // TODO: remove currentCalories logic, directly use targetCalories
     dietPlan.setTargetCalories(dietPlan.getCurrentCalories());
+
+    dietPlan.setTodayWeight(dietPlan.getWeight());
     dietPlan.setCreatedAt(LocalDate.now());
     dietPlan.setPlanStatus(PlanStatus.ACTIVE);
     dietPlan.setFormStatus(FormStatus.COMPLETED);
-    return dietPlanRepository.save(dietPlan);
+    dietPlan = dietPlanRepository.save(dietPlan);
+    dietPlanService.createDietPlanTrack(dietPlan);
+    return dietPlan;
   }
 
   private DietPlan getPendingDietPlan() {

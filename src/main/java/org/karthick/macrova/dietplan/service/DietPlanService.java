@@ -9,14 +9,13 @@ import java.util.*;
 import lombok.AllArgsConstructor;
 import org.karthick.macrova.dietplan.dto.*;
 import org.karthick.macrova.dietplan.entity.*;
-import org.karthick.macrova.dietplan.enums.Goal;
-import org.karthick.macrova.dietplan.enums.Plan;
 import org.karthick.macrova.dietplan.enums.PlanStatus;
 import org.karthick.macrova.dietplan.repository.*;
 import org.karthick.macrova.exception.BadRequestException;
 import org.karthick.macrova.exception.EntityNotFoundException;
 import org.karthick.macrova.security.UserSession;
 import org.karthick.macrova.shared.model.Calories;
+import org.karthick.macrova.shared.model.Macros;
 import org.karthick.macrova.shared.model.MacrosTrack;
 import org.karthick.macrova.shared.model.MealKcal;
 import org.karthick.macrova.util.NutrientsCalculator;
@@ -68,75 +67,14 @@ public class DietPlanService {
     return dietPlan.get();
   }
 
-  public DietPlan createDietPlan(DietPlan dietPlan) {
-    validateDietPlan(dietPlan);
-    dietPlan.setTodayWeight(dietPlan.getWeight());
-    dietPlan.setUserId(userSession.getAuthenticatedUserId());
-    dietPlan.setPlanStatus(PlanStatus.ACTIVE);
-    dietPlannerRepository.save(dietPlan);
-    createDietPlanTrack(dietPlan);
-    return dietPlan;
-  }
-
-  public DietPlan updateDietPlan(DietPlan dietPlan) {
-    return createDietPlan(dietPlan);
-  }
-
-  private void validateDietPlan(DietPlan dietPlan) {
-    // validate Target weight
-    double bmi = NutrientsCalculator.findBMI(
-      dietPlan.getHeight(),
-      dietPlan.getTargetWeight()
-    );
-    if (
-      (Plan.WEIGHT_LOSS.equals(dietPlan.getPlan()) && bmi < 18) ||
-      (Plan.WEIGHT_GAIN.equals(dietPlan.getPlan()) && bmi > 25)
-    ) {
-      throw new BadRequestException(
-        dietPlan.getTargetWeight() + "kg is not the healthy weight"
-      );
-    }
-    // validate Duration
-    double mass = dietPlan.getWeight() - dietPlan.getTargetWeight();
-    int min = NutrientsCalculator.findMinimumDuration(mass, dietPlan.getPlan());
-    int max = NutrientsCalculator.findMaximumDuration(mass);
-    if (dietPlan.getDuration() < min || dietPlan.getDuration() > max) {
-      throw new BadRequestException(
-        min + "-" + max + " days are the healthy duration"
-      );
-    }
-  }
-
   private void processDietPlan(DietPlan dietPlan, DietPlanTrack dietPlanTrack) {
-    dietPlanTrack.setTdee(
-      NutrientsCalculator.findTDEE(
-        dietPlan.getAge(),
-        dietPlanTrack.getWeight(),
-        dietPlan.getHeight(),
-        dietPlan.getGender(),
-        dietPlan.getActivity()
-      )
-    );
-    double intake = getIntake(
-      dietPlanTrack.getTdee(),
-      dietPlan.getGoal(),
-      dietPlan.getPlan()
-    );
-    dietPlanTrack.setIntake(new Calories(intake));
-    dietPlanTrack.setProtein(
-      new Calories(NutrientsCalculator.findProtein(intake, 30))
-    );
-    dietPlanTrack.setFat(new Calories(NutrientsCalculator.findFat(intake, 30)));
-    dietPlanTrack.setCarbs(
-      new Calories(NutrientsCalculator.findCarbs(intake, 40))
-    );
+    Macros macros = dietPlan.getMacros();
+    dietPlanTrack.setTdee(dietPlan.getTdee());
+    dietPlanTrack.setIntake(new Calories(dietPlan.getTargetCalories()));
+    dietPlanTrack.setProtein(new Calories(macros.getProtein()));
+    dietPlanTrack.setFat(new Calories(macros.getFat()));
+    dietPlanTrack.setCarbs(new Calories(macros.getCarbs()));
     dietPlanTrack.setMealKcal(splitForMealKcal(dietPlanTrack));
-  }
-
-  private double getIntake(double tdee, Goal goal, Plan plan) {
-    return plan == Plan.WEIGHT_LOSS
-      ? NutrientsCalculator.findDeficit(tdee, goal.getValue())
-      : NutrientsCalculator.findSurplus(tdee, goal.getValue());
   }
 
   public DietPlanTrack createDietPlanTrack(DietPlan dietPlan) {
@@ -206,7 +144,8 @@ public class DietPlanService {
       case MacrosConstants.BREAKFAST -> mealKcal.getBreakfast();
       case MacrosConstants.LUNCH -> mealKcal.getLunch();
       case MacrosConstants.DINNER -> mealKcal.getDinner();
-      default -> mealKcal.getSnack();
+      case MacrosConstants.SNACK -> mealKcal.getSnack();
+      default -> throw new BadRequestException("Invalid category: " + category);
     };
   }
 

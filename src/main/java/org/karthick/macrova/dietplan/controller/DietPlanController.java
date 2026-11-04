@@ -81,16 +81,6 @@ public class DietPlanController {
     return dietPlanService.findDietPlanById(dietPlanId);
   }
 
-  @PostMapping
-  public DietPlan createDietPlan(@RequestBody DietPlan dietPlan) {
-    return dietPlanService.createDietPlan(dietPlan);
-  }
-
-  @PutMapping("/update")
-  public DietPlan updateDietPlan(@RequestBody DietPlan dietPlan) {
-    return dietPlanService.updateDietPlan(dietPlan);
-  }
-
   @PostMapping("/add-weight/{dietPlanId}")
   public DietPlanTrack addWeight(
     @PathVariable String dietPlanId,

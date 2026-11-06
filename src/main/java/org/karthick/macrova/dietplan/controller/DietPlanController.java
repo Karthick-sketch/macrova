@@ -3,9 +3,8 @@ package org.karthick.macrova.dietplan.controller;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import org.karthick.macrova.dietplan.dto.*;
-import org.karthick.macrova.dietplan.dto.form.*;
 import org.karthick.macrova.dietplan.entity.*;
-import org.karthick.macrova.dietplan.service.*;
+import org.karthick.macrova.dietplan.service.DietPlanService;
 import org.karthick.macrova.exception.BadRequestException;
 import org.karthick.macrova.shared.model.MacrosTrack;
 import org.karthick.macrova.shared.model.MealKcal;
@@ -19,56 +18,15 @@ import org.springframework.web.bind.annotation.*;
 public class DietPlanController {
 
   private final DietPlanService dietPlanService;
-  private final DietPlanFormService dietPlanFormService;
 
-  // Diet plan form related endpoints
-  @GetMapping("/form/status")
-  public DietPlanFormStatus getDietPlanFormStatus() {
-    return dietPlanFormService.getDietPlanFormStatus();
-  }
-
-  @PostMapping("/form/status")
-  public DietPlanFormStatus getDietPlanFormDetails(
-    @RequestBody CurrentFormStatus status
-  ) {
-    return dietPlanFormService.getDietPlanFormDetails(status);
-  }
-
-  @PostMapping("/form/body-metrics")
-  public BodyMetricsResponse createDietPlanBodyMetrics(
-    @RequestBody BodyMetricsRequest request
-  ) {
-    return dietPlanFormService.createDietPlanBodyMetrics(request);
-  }
-
-  @PostMapping("/form/goal-selection")
-  public CaloriesEstimationResponse createDietPlanGoalSelection(
-    @RequestBody GoalSelectionRequest request
-  ) {
-    return dietPlanFormService.createDietPlanGoalSelection(request);
-  }
-
-  @PostMapping("/form/meal-preference")
-  public DietPlan createDietPlanMealPreference(
-    @RequestBody MealPreferenceRequest request
-  ) {
-    return dietPlanFormService.createDietPlanMealPreference(request);
-  }
-
-  @PostMapping("/form/create")
-  public DietPlan createDietPlan() {
-    return dietPlanFormService.createDietPlan();
-  }
-
-  // Diet plan related endpoints
   @GetMapping("/all")
   public List<DietPlan> getAllDietPlans() {
     return dietPlanService.findAllDietPlans();
   }
 
   @GetMapping("/history")
-  public List<DietPlansHistoryDTO> getDietPlansHistory() {
-    return dietPlanService.findDietPlansHistory();
+  public List<DietPlanHistoryDTO> getDietPlanHistory() {
+    return dietPlanService.findDietPlanHistory();
   }
 
   @GetMapping
@@ -143,7 +101,7 @@ public class DietPlanController {
   }
 
   @GetMapping("/past-plan")
-  public DietPlansHistoryDTO getPastPlan() {
+  public DietPlanHistoryDTO getPastPlan() {
     return dietPlanService.findPastDietPlan();
   }
 }

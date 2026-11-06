@@ -38,8 +38,8 @@ public class DietPlanService {
     );
   }
 
-  public List<DietPlansHistoryDTO> findDietPlansHistory() {
-    return dietPlannerRepository.findDietPlansHistoryByUserId(
+  public List<DietPlanHistoryDTO> findDietPlanHistory() {
+    return dietPlannerRepository.findDietPlanHistoryByUserId(
       userSession.getAuthenticatedUserId()
     );
   }
@@ -140,7 +140,7 @@ public class DietPlanService {
   }
 
   private MacrosTrack getMacrosByCategory(MealKcal mealKcal, String category) {
-    return switch (category) {
+    return switch (category.toLowerCase()) {
       case MacrosConstants.BREAKFAST -> mealKcal.getBreakfast();
       case MacrosConstants.LUNCH -> mealKcal.getLunch();
       case MacrosConstants.DINNER -> mealKcal.getDinner();
@@ -322,9 +322,9 @@ public class DietPlanService {
     }
   }
 
-  public DietPlansHistoryDTO findPastDietPlan() {
-    Optional<DietPlansHistoryDTO> dietPlan =
-      dietPlannerRepository.findFirstDietPlansHistoryByUserId(
+  public DietPlanHistoryDTO findPastDietPlan() {
+    Optional<DietPlanHistoryDTO> dietPlan =
+      dietPlannerRepository.findFirstDietPlanHistoryByUserId(
         userSession.getAuthenticatedUserId()
       );
     if (dietPlan.isEmpty()) {

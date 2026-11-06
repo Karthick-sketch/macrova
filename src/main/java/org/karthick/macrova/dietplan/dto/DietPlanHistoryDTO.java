@@ -1,12 +1,11 @@
 package org.karthick.macrova.dietplan.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import org.karthick.macrova.dietplan.enums.Plan;
+import org.karthick.macrova.dietplan.enums.PlanStatus;
 
-@Getter
-@Setter
-public class DietPlansHistoryDTO {
+@Data
+public class DietPlanHistoryDTO {
 
   private String id;
   private String title;
@@ -14,5 +13,5 @@ public class DietPlansHistoryDTO {
   private double weight;
   private double targetWeight;
   private int duration;
-  private boolean active;
+  private PlanStatus planStatus;
 }

@@ -23,9 +23,10 @@ public class AIFoodSuggestService {
 
   private String buildPrompt(FilterDTO filter, long calories) {
     return String.format(
-      "Suggest me 5 healthy %s cuisine %s foods for %s under %d calories.",
+      "Suggest me 5 healthy %s cuisine %s %s foods for %s under %d calories.",
       filter.getCuisineFilter(),
-      filter.getFoodFilter(),
+      filter.getMealTypeFilter(),
+      filter.getDietTypeFilter(),
       filter.getMealFilter(),
       calories
     );

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.karthick.macrova.aichatservice.LLMService;
 import org.karthick.macrova.aifoodsuggest.dto.FilterDTO;
@@ -12,6 +13,7 @@ import org.karthick.macrova.aifoodsuggest.entity.*;
 import org.karthick.macrova.aifoodsuggest.repository.*;
 import org.karthick.macrova.dietplan.service.DietPlanService;
 import org.karthick.macrova.exception.BadGatewayException;
+import org.karthick.macrova.exception.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -37,16 +39,72 @@ public class AIFoodSuggestService {
     );
   }
 
+  private String buildRetryPrompt(AIFoodSuggestResponse response) {
+    return String.format(
+      "The previous response contains invalid JSON. Review and correct it while preserving all original food information and nutritional values.\n" +
+        "Ensure the output strictly follows the provided JSON schema, contains no missing or additional fields, and uses the correct data types.\n" +
+        "Do not generate new food items or modify existing values.\n" +
+        "Return only valid JSON without Markdown code fences or additional explanations.\n\n" +
+        "Original prompt:\n%s\n\n" +
+        "Invalid response:\n%s",
+      response.getPrompt(),
+      response.getAiResponse()
+    );
+  }
+
   public List<AIFoodSuggest> suggestFood(FilterDTO filterDTO) {
     String prompt = buildPrompt(
       filterDTO,
       dietPlanService.getCaloriesByMealCategory(filterDTO.getMealFilter())
     );
-    AIFoodSuggestResponse aiFoodSuggestResponse = new AIFoodSuggestResponse(
-      prompt
-    );
+    AIFoodSuggestResponse aiResponse = creaAIFoodSuggestResponse(prompt);
     try {
-      String aiResponse = llmService.foodSuggestChat(prompt);
+      return suggestFood(aiResponse);
+    } catch (BadGatewayException e) {
+      return retryFoodSuggest(aiResponse);
+    }
+  }
+
+  public List<AIFoodSuggest> retryFoodSuggest(String responseId) {
+    Optional<AIFoodSuggestResponse> optionalResponse =
+      aiFoodSuggestResponseRepository.findById(
+        Objects.requireNonNull(responseId)
+      );
+
+    if (optionalResponse.isEmpty()) {
+      throw new EntityNotFoundException("No AI response found.");
+    }
+
+    return retryFoodSuggest(optionalResponse.get());
+  }
+
+  public List<AIFoodSuggest> addSuggestions(
+    List<AIFoodSuggest> aiFoodSuggests
+  ) {
+    return aifoodSuggestRepository.saveAll(
+      Objects.requireNonNull(aiFoodSuggests)
+    );
+  }
+
+  private AIFoodSuggestResponse creaAIFoodSuggestResponse(String prompt) {
+    return aiFoodSuggestResponseRepository.save(
+      new AIFoodSuggestResponse(prompt)
+    );
+  }
+
+  private List<AIFoodSuggest> retryFoodSuggest(
+    AIFoodSuggestResponse aiResponse
+  ) {
+    return suggestFood(creaAIFoodSuggestResponse(buildRetryPrompt(aiResponse)));
+  }
+
+  private List<AIFoodSuggest> suggestFood(
+    AIFoodSuggestResponse aiFoodSuggestResponse
+  ) {
+    try {
+      String aiResponse = llmService.foodSuggestChat(
+        aiFoodSuggestResponse.getPrompt()
+      );
       aiFoodSuggestResponse.setAiResponse(aiResponse);
       List<AIFoodSuggest> aiFoodSuggests = addSuggestions(
         convertToFoodSuggest(aiResponse)
@@ -62,16 +120,10 @@ public class AIFoodSuggestService {
       aiFoodSuggestResponse.setErrorResponse(e.getMessage());
       throw new BadGatewayException("Problem with LLM");
     } finally {
-      aiFoodSuggestResponseRepository.save(aiFoodSuggestResponse);
+      aiFoodSuggestResponseRepository.save(
+        Objects.requireNonNull(aiFoodSuggestResponse)
+      );
     }
-  }
-
-  public List<AIFoodSuggest> addSuggestions(
-    List<AIFoodSuggest> aiFoodSuggests
-  ) {
-    return aifoodSuggestRepository.saveAll(
-      Objects.requireNonNull(aiFoodSuggests)
-    );
   }
 
   private List<AIFoodSuggest> convertToFoodSuggest(String response)

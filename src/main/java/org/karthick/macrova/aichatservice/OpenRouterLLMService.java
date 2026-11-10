@@ -46,6 +46,11 @@ public class OpenRouterLLMService implements LLMService {
     return getContent(response.getBody());
   }
 
+  @Override
+  public String foodSuggestChat(String prompt) throws JsonProcessingException {
+    return chat(buildFoodSuggestChatModel(prompt));
+  }
+
   private HttpEntity<ChatModel> getHttpEntity(ChatModel chatModel) {
     HttpHeaders headers = new HttpHeaders();
     headers.add(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey);
@@ -62,11 +67,6 @@ public class OpenRouterLLMService implements LLMService {
       .path("message")
       .path("content");
     return contentNode.asText();
-  }
-
-  @Override
-  public String foodSuggestChat(String prompt) throws JsonProcessingException {
-    return chat(buildFoodSuggestChatModel(prompt));
   }
 
   private ChatModel buildFoodSuggestChatModel(String prompt) {

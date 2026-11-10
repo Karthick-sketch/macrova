@@ -18,4 +18,9 @@ public class AIFoodSuggestController {
   public List<AIFoodSuggest> suggestFood(@RequestBody FilterDTO filterDTO) {
     return aiFoodSuggestService.suggestFood(filterDTO);
   }
+
+  @PostMapping("/retry/{responseId}")
+  public List<AIFoodSuggest> retryFoodSuggest(@PathVariable String responseId) {
+    return aiFoodSuggestService.retryFoodSuggest(responseId);
+  }
 }

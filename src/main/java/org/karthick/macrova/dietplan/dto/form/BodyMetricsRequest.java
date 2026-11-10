@@ -1,4 +1,4 @@
-package org.karthick.macrova.dietplan.dto;
+package org.karthick.macrova.dietplan.dto.form;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,7 +12,7 @@ import org.karthick.macrova.dietplan.enums.Plan;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BodyMetricsResponse {
+public class BodyMetricsRequest {
 
   private String title;
   private Plan plan;
@@ -22,5 +22,4 @@ public class BodyMetricsResponse {
   private double weight;
   private double targetWeight;
   private Activity activity;
-  private double tdee;
 }

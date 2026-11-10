@@ -1,6 +1,5 @@
 package org.karthick.macrova.exception;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -28,10 +27,10 @@ public class ApplicationExceptionHandler {
   }
 
   @ExceptionHandler
-  public ResponseEntity<ErrorResponse> handleJsonProcessingException(
-    JsonProcessingException e
+  public ResponseEntity<ErrorResponse> handleBadGatewayException(
+    BadGatewayException e
   ) {
-    return ResponseEntity.status(HttpStatus.GONE).body(
+    return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(
       new ErrorResponse(e.getMessage())
     );
   }

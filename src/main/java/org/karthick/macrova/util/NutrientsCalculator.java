@@ -4,6 +4,8 @@ import org.karthick.macrova.dietplan.enums.Activity;
 import org.karthick.macrova.dietplan.enums.Gender;
 import org.karthick.macrova.dietplan.enums.Plan;
 import org.karthick.macrova.shared.model.Macros;
+import org.karthick.macrova.shared.model.MacrosQuantity;
+import org.karthick.macrova.shared.model.MacrosTrack;
 
 /**
  * Utility class providing static methods for calculating key nutritional and
@@ -136,20 +138,20 @@ public final class NutrientsCalculator {
   }
 
   /**
-   * Scales a {@link Macros} object by a given percentage.
+   * Scales a {@link MacrosTrack} object by a given percentage.
    *
    * <p>This is useful for calculating the macros for a specific portion of
    * the total daily intake (e.g., a single meal in a multi-meal plan).
    * Each macro's total value is scaled independently.
    *
-   * @param macros  the total daily {@link Macros} to scale
+   * @param macros  the total daily {@link MacrosTrack} to scale
    * @param percent the percentage to apply to each macro's total value
-   * @return a new {@link Macros} instance with each macro scaled by the
+   * @return a new {@link MacrosTrack} instance with each macro scaled by the
    *         given percentage
    * @see #percentageOf(double, int)
    */
-  public static Macros macrosPercentage(Macros macros, int percent) {
-    return new Macros(
+  public static MacrosTrack macrosPercentage(MacrosTrack macros, int percent) {
+    return new MacrosTrack(
       percentageOf(macros.getProtein().getTotal(), percent),
       percentageOf(macros.getFat().getTotal(), percent),
       percentageOf(macros.getCarbs().getTotal(), percent)
@@ -239,11 +241,11 @@ public final class NutrientsCalculator {
    *   <li>Carbohydrates: 4 kcal/g</li>
    * </ul>
    *
-   * @param macros the {@link Macros} object containing the amounts already
+   * @param macros the {@link MacrosTrack} object containing the amounts already
    *               consumed (taken values)
    * @return the total calories consumed as a {@code double}
    */
-  public static double calcTakenDeficit(Macros macros) {
+  public static double calcTakenDeficit(MacrosTrack macros) {
     return (
       macros.getProtein().getTaken() * 4 +
       macros.getFat().getTaken() * 9 +
@@ -261,11 +263,11 @@ public final class NutrientsCalculator {
    *   <li>Carbohydrates: 4 kcal/g</li>
    * </ul>
    *
-   * @param macros the {@link Macros} object containing the total (goal) values
+   * @param macros the {@link MacrosTrack} object containing the total (goal) values
    *               for each macro
    * @return the total target calories, rounded to the nearest long
    */
-  public static long calcTotalDeficit(Macros macros) {
+  public static long calcTotalDeficit(MacrosTrack macros) {
     return Math.round(
       macros.getProtein().getTotal() * 4 +
         macros.getFat().getTotal() * 9 +
@@ -284,22 +286,8 @@ public final class NutrientsCalculator {
    *                in kilocalories
    * @return the protein target in grams, rounded to the nearest whole gram
    */
-  public static double findProtein(double deficit) {
-    return Double.valueOf(Math.round(percentageOf(deficit, 30) / 4.0));
-  }
-
-  /**
-   * Calculates the daily fat target in grams from a given calorie budget.
-   *
-   * <p>Fat is allocated 30% of the total calorie budget. Since fat provides
-   * 9 kcal/g, the gram target is derived by dividing the calorie allocation by 9.
-   *
-   * @param deficit the total daily calorie target (e.g., a deficit or surplus value)
-   *                in kilocalories
-   * @return the fat target in grams, rounded to the nearest whole gram
-   */
-  public static double findFat(double deficit) {
-    return Double.valueOf(Math.round(percentageOf(deficit, 30) / 9.0));
+  public static double findProtein(double deficit, int percent) {
+    return Double.valueOf(Math.round(percentageOf(deficit, percent) / 4.0));
   }
 
   /**
@@ -313,7 +301,68 @@ public final class NutrientsCalculator {
    *                in kilocalories
    * @return the carbohydrate target in grams, rounded to the nearest whole gram
    */
-  public static double findCarbs(double deficit) {
-    return Double.valueOf(Math.round(percentageOf(deficit, 40) / 4.0));
+  public static double findCarbs(double deficit, int percent) {
+    return Double.valueOf(Math.round(percentageOf(deficit, percent) / 4.0));
+  }
+
+  /**
+   * Calculates the daily fat target in grams from a given calorie budget.
+   *
+   * <p>Fat is allocated 30% of the total calorie budget. Since fat provides
+   * 9 kcal/g, the gram target is derived by dividing the calorie allocation by 9.
+   *
+   * @param deficit the total daily calorie target (e.g., a deficit or surplus value)
+   *                in kilocalories
+   * @return the fat target in grams, rounded to the nearest whole gram
+   */
+  public static double findFat(double deficit, int percent) {
+    return Double.valueOf(Math.round(percentageOf(deficit, percent) / 9.0));
+  }
+
+  public static MacrosQuantity findProteinQuantity(double deficit) {
+    return new MacrosQuantity(
+      findProtein(deficit, 15),
+      findProtein(deficit, 50)
+    );
+  }
+
+  public static MacrosQuantity findCarbsQuantity(double deficit) {
+    return new MacrosQuantity(findCarbs(deficit, 20), findCarbs(deficit, 65));
+  }
+
+  public static MacrosQuantity findFatQuantity(double deficit) {
+    return new MacrosQuantity(findFat(deficit, 20), findFat(deficit, 40));
+  }
+
+  public static Macros findBalancedMacros(double deficit) {
+    return new Macros(
+      findProtein(deficit, 30),
+      findCarbs(deficit, 40),
+      findFat(deficit, 30)
+    );
+  }
+
+  public static Macros findHighProteinMacros(double deficit) {
+    return new Macros(
+      findProtein(deficit, 40),
+      findCarbs(deficit, 35),
+      findFat(deficit, 25)
+    );
+  }
+
+  public static Macros findLowCarbMacros(double deficit) {
+    return new Macros(
+      findProtein(deficit, 35),
+      findCarbs(deficit, 25),
+      findFat(deficit, 40)
+    );
+  }
+
+  public static Macros findLowFatMacros(double deficit) {
+    return new Macros(
+      findProtein(deficit, 30),
+      findCarbs(deficit, 50),
+      findFat(deficit, 20)
+    );
   }
 }

@@ -1,13 +1,12 @@
 package org.karthick.macrova.aifoodsuggest.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter
-@Setter
+@Data
 public class FilterDTO {
 
   private String mealFilter;
-  private String foodFilter;
+  private String mealTypeFilter;
+  private String dietTypeFilter;
   private String cuisineFilter;
 }

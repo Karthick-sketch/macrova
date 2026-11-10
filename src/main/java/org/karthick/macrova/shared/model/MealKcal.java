@@ -1,18 +1,16 @@
 package org.karthick.macrova.shared.model;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class MealKcal {
 
-  private Macros breakfast;
-  private Macros lunch;
-  private Macros snack;
-  private Macros dinner;
+  private MacrosTrack breakfast;
+  private MacrosTrack lunch;
+  private MacrosTrack snack;
+  private MacrosTrack dinner;
 }

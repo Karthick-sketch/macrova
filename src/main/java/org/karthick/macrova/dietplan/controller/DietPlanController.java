@@ -6,15 +6,15 @@ import org.karthick.macrova.dietplan.dto.*;
 import org.karthick.macrova.dietplan.entity.*;
 import org.karthick.macrova.dietplan.service.DietPlanService;
 import org.karthick.macrova.exception.BadRequestException;
-import org.karthick.macrova.shared.model.Macros;
+import org.karthick.macrova.shared.model.MacrosTrack;
 import org.karthick.macrova.shared.model.MealKcal;
 import org.karthick.macrova.util.constants.MacrosConstants;
 import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
 
-@AllArgsConstructor
 @RestController
 @RequestMapping("/diet-plan")
+@AllArgsConstructor
 public class DietPlanController {
 
   private final DietPlanService dietPlanService;
@@ -25,8 +25,8 @@ public class DietPlanController {
   }
 
   @GetMapping("/history")
-  public List<DietPlansHistoryDTO> getDietPlansHistory() {
-    return dietPlanService.findDietPlansHistory();
+  public List<DietPlanHistoryDTO> getDietPlanHistory() {
+    return dietPlanService.findDietPlanHistory();
   }
 
   @GetMapping
@@ -39,45 +39,34 @@ public class DietPlanController {
     return dietPlanService.findDietPlanById(dietPlanId);
   }
 
-  @PostMapping("/tdee")
-  public BodyMetricsResponse calculateTDEE(@RequestBody BodyMetricsRequest bodyMetricsDTO) {
-    return dietPlanService.calculateTDEE(bodyMetricsDTO);
-  }
-
-  @PostMapping
-  public DietPlan createDietPlan(@RequestBody DietPlan dietPlan) {
-    return dietPlanService.createDietPlan(dietPlan);
-  }
-
-  @PutMapping("/update")
-  public DietPlan updateDietPlan(@RequestBody DietPlan dietPlan) {
-    return dietPlanService.updateDietPlan(dietPlan);
-  }
-
   @PostMapping("/add-weight/{dietPlanId}")
   public DietPlanTrack addWeight(
-      @PathVariable String dietPlanId,
-      @RequestBody double weight) {
+    @PathVariable String dietPlanId,
+    @RequestBody double weight
+  ) {
     return dietPlanService.addWeight(dietPlanId, weight);
   }
 
   @GetMapping("/track/{dietPlanTrackId}")
   public DietPlanTrack getDietPlanTrackById(
-      @PathVariable @NonNull String dietPlanTrackId) {
+    @PathVariable @NonNull String dietPlanTrackId
+  ) {
     return dietPlanService.findDietPlanTrackById(dietPlanTrackId);
   }
 
   @GetMapping("/track/plan/{dietPlanId}")
   public DietPlanTrack getDietPlanTrackByDietPlanId(
-      @PathVariable String dietPlanId) {
+    @PathVariable String dietPlanId
+  ) {
     return dietPlanService.findDietPlanTrackByDietPlanId(dietPlanId);
   }
 
   @PostMapping("/{category}/{dietPlanId}")
   public DietPlanTrack updateMacros(
-      @PathVariable String category,
-      @PathVariable String dietPlanId,
-      @RequestBody Macros macros) {
+    @PathVariable String category,
+    @PathVariable String dietPlanId,
+    @RequestBody MacrosTrack macros
+  ) {
     if (MacrosConstants.validateMacro(category)) {
       return dietPlanService.updateMacros(dietPlanId, category, macros);
     }
@@ -101,7 +90,8 @@ public class DietPlanController {
 
   @GetMapping("/overview/{dietPlanId}")
   public List<DietPlanOverviewDTO> getDietPlansOverview(
-      @PathVariable String dietPlanId) {
+    @PathVariable String dietPlanId
+  ) {
     return dietPlanService.getDietPlansOverview(dietPlanId);
   }
 
@@ -111,7 +101,7 @@ public class DietPlanController {
   }
 
   @GetMapping("/past-plan")
-  public DietPlansHistoryDTO getPastPlan() {
+  public DietPlanHistoryDTO getPastPlan() {
     return dietPlanService.findPastDietPlan();
   }
 }

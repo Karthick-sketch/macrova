@@ -1,6 +1,5 @@
 package org.karthick.macrova.aifoodsuggest.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import org.karthick.macrova.aifoodsuggest.dto.FilterDTO;
@@ -16,8 +15,7 @@ public class AIFoodSuggestController {
   private final AIFoodSuggestService aiFoodSuggestService;
 
   @PostMapping
-  public List<AIFoodSuggest> suggestFood(@RequestBody FilterDTO filterDTO)
-    throws JsonProcessingException {
+  public List<AIFoodSuggest> suggestFood(@RequestBody FilterDTO filterDTO) {
     return aiFoodSuggestService.suggestFood(filterDTO);
   }
 }

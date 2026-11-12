@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
+import org.karthick.macrova.aichatservice.AIPrompts;
 import org.karthick.macrova.aichatservice.LLMService;
 import org.karthick.macrova.aifoodsuggest.dto.*;
 import org.karthick.macrova.aifoodsuggest.entity.*;
@@ -29,34 +30,18 @@ public class AIFoodSuggestService {
   private final DietPlanService dietPlanService;
   private final LLMService llmService;
 
-  private String buildPrompt(FilterDTO filter, long calories) {
-    return String.format(
-      "Suggest me 5 healthy %s cuisine %s %s foods for %s under %d calories.",
-      filter.getCuisineFilter(),
-      filter.getMealTypeFilter(),
-      filter.getDietTypeFilter(),
-      filter.getMealFilter(),
-      calories
-    );
-  }
-
-  private String buildRetryPrompt(AIFoodSuggestResponse response) {
-    return String.format(
-      "The previous response contains invalid JSON. Review and correct it while preserving all original food information and nutritional values.\n" +
-        "Ensure the output strictly follows the provided JSON schema, contains no missing or additional fields, and uses the correct data types.\n" +
-        "Do not generate new food items or modify existing values.\n" +
-        "Return only valid JSON without Markdown code fences or additional explanations.\n\n" +
-        "Original prompt:\n%s\n\n" +
-        "Invalid response:\n%s",
-      response.getPrompt(),
-      response.getAiResponse()
-    );
-  }
-
-  public AIFoodSuggestData suggestFood(FilterDTO filterDTO) {
-    String prompt = buildPrompt(
-      filterDTO,
-      dietPlanService.getCaloriesByMealCategory(filterDTO.getMealFilter())
+  public AIFoodSuggestData suggestFood(FoodPreferenceFilter filter) {
+    String prompt = AIPrompts.getFoodSuggestUserPrompt(
+      // TODO: find suggest count and macro targets
+      convertToFoodPreference(
+        filter,
+        5,
+        // TODO: change the type from long to int
+        (int) dietPlanService.getCaloriesByMealCategory(filter.getMeal()),
+        40,
+        35,
+        25
+      )
     );
     AIFoodSuggestResponse aiResponse = creaAIFoodSuggestResponse(prompt);
     try {
@@ -93,8 +78,12 @@ public class AIFoodSuggestService {
     );
   }
 
-  private AIFoodSuggestData retryFoodSuggest(AIFoodSuggestResponse aiResponse) {
-    return suggestFood(creaAIFoodSuggestResponse(buildRetryPrompt(aiResponse)));
+  private AIFoodSuggestData retryFoodSuggest(AIFoodSuggestResponse response) {
+    return suggestFood(
+      creaAIFoodSuggestResponse(
+        AIPrompts.getRetryUserPrompt(response.getAiResponse())
+      )
+    );
   }
 
   private AIFoodSuggestData suggestFood(
@@ -137,5 +126,23 @@ public class AIFoodSuggestService {
     throws JsonProcessingException {
     ObjectMapper mapper = new ObjectMapper();
     return mapper.readValue(response, new TypeReference<>() {});
+  }
+
+  private FoodPreference convertToFoodPreference(
+    FoodPreferenceFilter filter,
+    int suggestCount,
+    int calories,
+    int proteinTarget,
+    int carbsTarget,
+    int fatTarget
+  ) {
+    return FoodPreference.builder()
+      .foodPreferenceFilter(filter)
+      .suggestCount(suggestCount)
+      .calories(calories)
+      .proteinTarget(proteinTarget)
+      .carbsTarget(carbsTarget)
+      .fatTarget(fatTarget)
+      .build();
   }
 }

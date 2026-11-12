@@ -7,4 +7,6 @@ public interface LLMService {
   String chat(ChatModel chatModel) throws JsonProcessingException;
 
   String foodSuggestChat(String prompt) throws JsonProcessingException;
+
+  String retryChat(String prompt) throws JsonProcessingException;
 }

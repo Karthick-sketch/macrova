@@ -4,8 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
-import org.karthick.macrova.aichatservice.model.ChatModel;
-import org.karthick.macrova.aichatservice.model.MessageModel;
+import org.karthick.macrova.aichatservice.model.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -51,6 +50,11 @@ public class OpenRouterLLMService implements LLMService {
     return chat(buildFoodSuggestChatModel(prompt));
   }
 
+  @Override
+  public String retryChat(String prompt) throws JsonProcessingException {
+    return chat(buildRetryChatModel(prompt));
+  }
+
   private HttpEntity<ChatModel> getHttpEntity(ChatModel chatModel) {
     HttpHeaders headers = new HttpHeaders();
     headers.add(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey);
@@ -74,13 +78,27 @@ public class OpenRouterLLMService implements LLMService {
     chatModel.setModel(model);
     chatModel.setMessages(
       List.of(
-        new MessageModel(
-          "system",
-          "Respond in JSON with this format: '{ name: string, calories: number, macronutrients: { protein: number, carbs: number, fat: number }, description: string }[]'. No other output. /no_think"
-        ),
+        new MessageModel("system", AIPrompts.getFoodSuggestSystemPrompt()),
         new MessageModel("user", prompt)
       )
     );
+    // TODO: set recommended property values
+    chatModel.setTemperature(0.3);
+    chatModel.setMax_tokens(-1);
+    chatModel.setStream(false);
+    return chatModel;
+  }
+
+  private ChatModel buildRetryChatModel(String prompt) {
+    ChatModel chatModel = new ChatModel();
+    chatModel.setModel(model);
+    chatModel.setMessages(
+      List.of(
+        new MessageModel("system", AIPrompts.getRetrySystemPrompt()),
+        new MessageModel("user", prompt)
+      )
+    );
+    // TODO: set recommended property values
     chatModel.setTemperature(0.3);
     chatModel.setMax_tokens(-1);
     chatModel.setStream(false);

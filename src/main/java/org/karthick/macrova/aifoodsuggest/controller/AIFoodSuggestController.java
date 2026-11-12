@@ -13,8 +13,10 @@ public class AIFoodSuggestController {
   private final AIFoodSuggestService aiFoodSuggestService;
 
   @PostMapping
-  public AIFoodSuggestData suggestFood(@RequestBody FilterDTO filterDTO) {
-    return aiFoodSuggestService.suggestFood(filterDTO);
+  public AIFoodSuggestData suggestFood(
+    @RequestBody FoodPreferenceFilter filter
+  ) {
+    return aiFoodSuggestService.suggestFood(filter);
   }
 
   @PostMapping("/retry/{responseId}")

@@ -27,11 +27,11 @@ public class ApplicationExceptionHandler {
   }
 
   @ExceptionHandler
-  public ResponseEntity<ErrorResponse> handleBadGatewayException(
+  public ResponseEntity<AIFoodSuggestErrorResponse> handleBadGatewayException(
     BadGatewayException e
   ) {
     return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(
-      new ErrorResponse(e.getMessage())
+      e.getErrorResponse()
     );
   }
 

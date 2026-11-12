@@ -8,10 +8,11 @@ import java.util.Objects;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.karthick.macrova.aichatservice.LLMService;
-import org.karthick.macrova.aifoodsuggest.dto.FilterDTO;
+import org.karthick.macrova.aifoodsuggest.dto.*;
 import org.karthick.macrova.aifoodsuggest.entity.*;
 import org.karthick.macrova.aifoodsuggest.repository.*;
 import org.karthick.macrova.dietplan.service.DietPlanService;
+import org.karthick.macrova.exception.AIFoodSuggestErrorResponse;
 import org.karthick.macrova.exception.BadGatewayException;
 import org.karthick.macrova.exception.EntityNotFoundException;
 import org.springframework.stereotype.Service;
@@ -52,7 +53,7 @@ public class AIFoodSuggestService {
     );
   }
 
-  public List<AIFoodSuggest> suggestFood(FilterDTO filterDTO) {
+  public AIFoodSuggestData suggestFood(FilterDTO filterDTO) {
     String prompt = buildPrompt(
       filterDTO,
       dietPlanService.getCaloriesByMealCategory(filterDTO.getMealFilter())
@@ -65,7 +66,7 @@ public class AIFoodSuggestService {
     }
   }
 
-  public List<AIFoodSuggest> retryFoodSuggest(String responseId) {
+  public AIFoodSuggestData retryFoodSuggest(String responseId) {
     Optional<AIFoodSuggestResponse> optionalResponse =
       aiFoodSuggestResponseRepository.findById(
         Objects.requireNonNull(responseId)
@@ -92,13 +93,11 @@ public class AIFoodSuggestService {
     );
   }
 
-  private List<AIFoodSuggest> retryFoodSuggest(
-    AIFoodSuggestResponse aiResponse
-  ) {
+  private AIFoodSuggestData retryFoodSuggest(AIFoodSuggestResponse aiResponse) {
     return suggestFood(creaAIFoodSuggestResponse(buildRetryPrompt(aiResponse)));
   }
 
-  private List<AIFoodSuggest> suggestFood(
+  private AIFoodSuggestData suggestFood(
     AIFoodSuggestResponse aiFoodSuggestResponse
   ) {
     try {
@@ -115,10 +114,18 @@ public class AIFoodSuggestService {
           .map(suggest -> suggest.getId())
           .toList()
       );
-      return aiFoodSuggests;
+      return new AIFoodSuggestData(
+        aiFoodSuggestResponse.getId(),
+        aiFoodSuggests
+      );
     } catch (Exception e) {
       aiFoodSuggestResponse.setErrorResponse(e.getMessage());
-      throw new BadGatewayException("Problem with LLM");
+      throw new BadGatewayException(
+        new AIFoodSuggestErrorResponse(
+          aiFoodSuggestResponse.getId(),
+          e.getMessage()
+        )
+      );
     } finally {
       aiFoodSuggestResponseRepository.save(
         Objects.requireNonNull(aiFoodSuggestResponse)
